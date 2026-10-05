@@ -1,0 +1,31 @@
+{
+  "name": "warden-monorepo",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=24.19.0"
+  },
+  "scripts": {
+    "build": "npm run build -w @warden/cli",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit -p packages/core && tsc --noEmit -p packages/cli",
+    "lint": "eslint packages",
+    "format": "prettier --write \"packages/**/*.ts\" \"docs/**/*.md\"",
+    "schemas": "npm run schemas -w @warden/core"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^24.19.1",
+    "eslint": "^10.12.0",
+    "prettier": "^3.9.9",
+    "tsup": "^8.5.1",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.71.0",
+    "vitest": "^5.0.3"
+  }
+}

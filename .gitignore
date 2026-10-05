@@ -1,0 +1,9 @@
+node_modules/
+dist/
+coverage/
+*.log
+.DS_Store
+.env
+spikes/node_modules/
+.warden/pending/
+.warden/.cache/
