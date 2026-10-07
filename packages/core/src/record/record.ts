@@ -1,6 +1,6 @@
 // `record`: link hunks to a changeset (existing, or created on the spot) in pending state.
 import { z } from 'zod';
-import { WardenError } from '../errors.js';
+import { VestryError } from '../errors.js';
 import { loadIgnore } from '../ignore.js';
 import { AuthorSchema, ChangesetIdSchema } from '../schema/schemas.js';
 import type { PendingChange } from '../schema/schemas.js';
@@ -53,7 +53,7 @@ export function parseRecordInput(raw: unknown): RecordInput {
       if (c && typeof c === 'object') {
         const bad = LINE_NUMBER_KEYS.filter((k) => k in (c as object));
         if (bad.length)
-          throw new WardenError(
+          throw new VestryError(
             'INVALID_INPUT',
             `do not pass line numbers (${bad.join(', ')}); select changes by hunk id from \`status\`.`,
           );
@@ -62,7 +62,7 @@ export function parseRecordInput(raw: unknown): RecordInput {
   }
   const r = RecordInputSchema.safeParse(raw);
   if (!r.success) {
-    throw new WardenError(
+    throw new VestryError(
       'INVALID_INPUT',
       r.error.issues.map((i) => `${i.path.join('.') || 'input'}: ${i.message}`).join('; '),
     );
@@ -102,7 +102,7 @@ export async function record(
       });
     }
   }
-  if (problems.length) throw new WardenError('UNKNOWN_HUNK', problems.join('; '));
+  if (problems.length) throw new VestryError('UNKNOWN_HUNK', problems.join('; '));
 
   // resolve the changeset
   let changesetId: string;
@@ -110,7 +110,7 @@ export async function record(
   if ('id' in input.changeset && !('title' in input.changeset)) {
     const known = await knownChangesetIds(root);
     if (!known.has(input.changeset.id)) {
-      throw new WardenError(
+      throw new VestryError(
         'UNKNOWN_CHANGESET',
         `unknown changeset id: ${input.changeset.id}. Use \`changeset find\` to look it up.`,
       );

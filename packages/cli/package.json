@@ -1,18 +1,24 @@
 {
-  "name": "@warden/cli",
+  "name": "@vestry/cli",
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Warden command line interface",
+  "description": "Vestry command line interface",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/swzn/vestry.git",
+    "directory": "packages/cli"
+  },
   "bin": {
-    "warden": "./dist/bin.js"
+    "vestry": "./dist/bin.js"
   },
   "engines": { "node": ">=24.19.0" },
   "scripts": {
     "build": "tsup"
   },
   "dependencies": {
-    "@warden/core": "*",
+    "@vestry/core": "*",
     "commander": "^14.0.0"
   }
 }

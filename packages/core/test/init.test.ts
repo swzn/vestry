@@ -15,9 +15,9 @@ const mk = () => {
 };
 
 describe('managed hook block', () => {
-  const block = hookBlock('C:\\tools\\warden\\bin.js');
+  const block = hookBlock('C:\\tools\\vestry\\bin.js');
   it('uses forward slashes and LF only', () => {
-    expect(block).toContain('C:/tools/warden/bin.js');
+    expect(block).toContain('C:/tools/vestry/bin.js');
     expect(block).not.toContain('\r');
     expect(block).toContain('finalize --hook');
   });
@@ -69,7 +69,7 @@ describe('initProject', () => {
     const r = mk();
     const repo = await discoverRepo(r.dir);
     const first = await initProject(repo, { gitHooks: true, cliPath: '/x/bin.js' });
-    expect(first.created).toEqual(['.warden/.gitignore']);
+    expect(first.created).toEqual(['.vestry/.gitignore']);
     expect(first.hooks.map((h) => [h.name, h.action])).toEqual([
       ['pre-commit', 'created'],
       ['post-commit', 'created'],

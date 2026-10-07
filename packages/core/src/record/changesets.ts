@@ -1,6 +1,6 @@
 // Finding existing changesets and creating new (pending) ones.
 import { z } from 'zod';
-import { WardenError } from '../errors.js';
+import { VestryError } from '../errors.js';
 import { gitIdentity } from '../git/repo.js';
 import { SimpleSearchProvider } from '../search/index.js';
 import type { SearchProvider } from '../search/index.js';
@@ -104,7 +104,7 @@ export async function createPendingChangeset(
 ): Promise<PendingChangeset> {
   const parsed = NewChangesetInputSchema.safeParse(input);
   if (!parsed.success) {
-    throw new WardenError(
+    throw new VestryError(
       'INVALID_INPUT',
       parsed.error.issues.map((i) => `${i.path.join('.') || 'input'}: ${i.message}`).join('; '),
     );
@@ -116,7 +116,7 @@ export async function createPendingChangeset(
     for (const id of data[kind] ?? []) if (!known.has(id)) unknown.push(`${kind}: ${id}`);
   }
   if (unknown.length) {
-    throw new WardenError(
+    throw new VestryError(
       'UNKNOWN_CHANGESET',
       `unknown changeset id(s): ${unknown.join(', ')}. Use \`changeset find\` to look them up.`,
     );

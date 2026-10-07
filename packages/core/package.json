@@ -1,9 +1,15 @@
 {
-  "name": "@warden/core",
+  "name": "@vestry/core",
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Warden core: git layer, ledger schema, recording workflow",
+  "description": "Vestry core: git layer, ledger schema, recording workflow",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/swzn/vestry.git",
+    "directory": "packages/core"
+  },
   "exports": {
     ".": "./src/index.ts"
   },

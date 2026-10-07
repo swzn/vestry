@@ -1,4 +1,4 @@
-// Decides which paths Warden does not document: built-in defaults plus `.wardenignore` (gitignore syntax).
+// Decides which paths Vestry does not document: built-in defaults plus `.vestryignore` (gitignore syntax).
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import ignore from 'ignore';

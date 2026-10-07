@@ -9,6 +9,6 @@ export default defineConfig({
   sourcemap: false,
   splitting: false,
   // bundle the workspace core package so the CLI is a single self-contained file
-  noExternal: [/^@warden\/core/],
+  noExternal: [/^@vestry\/core/],
   banner: { js: '#!/usr/bin/env node' },
 });

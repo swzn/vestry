@@ -1,8 +1,8 @@
 // Finalize turns pending records into an immutable entry that lands in the same commit.
 // It runs as the last step of pre-commit (after formatters), resolves everything against the staged diff,
 // writes entries/<ulid>.json (and any new changesets), and `git add`s them. Callers never supply line numbers.
-import { BIN_NAME } from '../constants.js';
-import { WardenError } from '../errors.js';
+import { BIN_NAME, PRODUCT_NAME } from '../constants.js';
+import { VestryError } from '../errors.js';
 import { deletionNeighbourHashes, rangeHash } from '../git/normalize.js';
 import { inProgressOperation, gitIdentity } from '../git/repo.js';
 import type { RepoInfo } from '../git/repo.js';
@@ -92,7 +92,7 @@ export async function finalize(
     const files = [...new Set(hs.map((h) => h.file))];
     report.warn(
       'UNCOVERED_HUNKS',
-      `${hs.length} staged change(s) have no Warden record (${files.slice(0, 5).join(', ')}${files.length > 5 ? ', ...' : ''}). ` +
+      `${hs.length} staged change(s) have no ${PRODUCT_NAME} record (${files.slice(0, 5).join(', ')}${files.length > 5 ? ', ...' : ''}). ` +
         `Run \`${BIN_NAME} status\`, then \`${BIN_NAME} record\`, before committing.`,
       { details: { files } },
     );
@@ -229,7 +229,7 @@ export async function finalize(
     }
     const p = pending.changesets.get(id);
     if (!p)
-      throw new WardenError(
+      throw new VestryError(
         'UNKNOWN_CHANGESET',
         `changeset ${id} is referenced by a pending record but exists nowhere`,
       );

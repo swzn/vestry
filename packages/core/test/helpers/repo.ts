@@ -4,11 +4,18 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
+/**
+ * The canonical form of an existing path. git reports canonical paths, while `os.tmpdir()` can contain
+ * aliases: `/var` is a symlink to `/private/var` on macOS, and Windows may hand out 8.3 short names
+ * such as `RUNNER~1`. Tests that compare paths against git's output must use this form.
+ */
+export const realPath = (p: string): string => fs.realpathSync.native(p);
+
 export class TestRepo {
   private constructor(readonly dir: string) {}
 
   static create(opts: { autocrlf?: 'true' | 'false' | 'input'; init?: boolean } = {}): TestRepo {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'warden-repo-'));
+    const dir = realPath(fs.mkdtempSync(path.join(os.tmpdir(), 'vestry-repo-')));
     const r = new TestRepo(dir);
     if (opts.init !== false) {
       r.git('init', '-q');

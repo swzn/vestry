@@ -9,7 +9,7 @@ import { ensureLayout } from './schema/layout.js';
 const BEGIN = `# >>> ${BIN_NAME} managed block >>>`;
 const END = `# <<< ${BIN_NAME} managed block <<<`;
 
-/** The hooks Warden manages and the CLI invocation each one runs. */
+/** The hooks Vestry manages and the CLI invocation each one runs. */
 export const MANAGED_HOOKS = [
   { name: 'pre-commit', args: 'finalize --hook', blocking: true },
   // repairs the index after `git commit <path>` (see repair.ts); never blocks

@@ -13,7 +13,7 @@ import {
   writeChangeset,
   writeEntry,
   writeOnce,
-  WardenError,
+  VestryError,
   earliestEntryId,
   changesByChangeset,
   ulid,
@@ -109,7 +109,7 @@ describe('writing', () => {
     const r = mk();
     const file = r.abs('x/y.json');
     await writeOnce(file, 'one');
-    await expect(writeOnce(file, 'two')).rejects.toThrow(WardenError);
+    await expect(writeOnce(file, 'two')).rejects.toThrow(VestryError);
     expect(fs.readFileSync(file, 'utf8')).toBe('one');
     expect(fs.readdirSync(path.dirname(file))).toEqual(['y.json']); // no temp files left behind
   });
@@ -117,9 +117,9 @@ describe('writing', () => {
     const r = mk();
     const first = await ensureLayout(r.dir);
     const second = await ensureLayout(r.dir);
-    expect(first.created).toEqual(['.warden/.gitignore']);
+    expect(first.created).toEqual(['.vestry/.gitignore']);
     expect(second.created).toEqual([]);
-    expect(r.read('.warden/.gitignore')).toBe('pending/\n.cache/\n');
+    expect(r.read('.vestry/.gitignore')).toBe('pending/\n.cache/\n');
   });
 });
 
@@ -129,8 +129,8 @@ describe('ledger reader and integrity', () => {
     await ensureLayout(r.dir);
     const c = cs('retry-ab12');
     await writeChangeset(r.dir, c);
-    r.write('.warden/changesets/broken.json', '{ nope');
-    r.write('.warden/changesets/mismatch.json', canonicalJson('changeset', cs('other-id1')));
+    r.write('.vestry/changesets/broken.json', '{ nope');
+    r.write('.vestry/changesets/mismatch.json', canonicalJson('changeset', cs('other-id1')));
 
     const wt = await loadLedger(r.dir, { kind: 'worktree' });
     expect(wt.changesets.has('retry-ab12')).toBe(true);

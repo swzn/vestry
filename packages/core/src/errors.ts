@@ -22,18 +22,18 @@ export type ErrorCode =
   | 'WRITE_ONCE'
   | 'USAGE';
 
-export class WardenError extends Error {
+export class VestryError extends Error {
   readonly code: ErrorCode;
   readonly exitCode: number;
   readonly details?: unknown;
 
   constructor(code: ErrorCode, message: string, options: { details?: unknown; exitCode?: number } = {}) {
     super(message);
-    this.name = 'WardenError';
+    this.name = 'VestryError';
     this.code = code;
     this.exitCode = options.exitCode ?? (code === 'USAGE' ? ExitCode.Usage : ExitCode.Error);
     this.details = options.details;
   }
 }
 
-export const isWardenError = (e: unknown): e is WardenError => e instanceof WardenError;
+export const isVestryError = (e: unknown): e is VestryError => e instanceof VestryError;

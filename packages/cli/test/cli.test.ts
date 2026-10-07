@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
+import pkg from '../package.json' with { type: 'json' };
 import { main } from '../src/cli.js';
 import type { IO } from '../src/io.js';
 import { lines, TestRepo } from '../../core/test/helpers/repo.js';
@@ -42,12 +43,20 @@ describe('cli basics', () => {
     expect(res.out).toContain('finalize');
   });
 
+  it('prints the package version for --version and -V', async () => {
+    for (const flag of ['--version', '-V']) {
+      const res = await run(process.cwd(), [flag]);
+      expect(res.code).toBe(0);
+      expect(res.out.trim()).toBe(pkg.version);
+    }
+  });
+
   it('exits 2 on unknown commands', async () => {
     expect((await run(process.cwd(), ['definitely-not-a-command'])).code).toBe(2);
   });
 
   it('reports a clear error outside a repository, in human and JSON form', async () => {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'warden-cli-norepo-'));
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'vestry-cli-norepo-'));
     try {
       const human = await run(dir, ['status']);
       expect(human.code).toBe(1);
@@ -152,16 +161,16 @@ describe('finalize and verify through the CLI', () => {
     r.write('a.txt', lines(20).replace('line 5', 'FIVE')).add('a.txt');
     const res = await run(r.dir, ['finalize', '--hook']);
     expect(res.code).toBe(0);
-    expect(res.err).toMatch(/no Warden record/);
+    expect(res.err).toMatch(/no Vestry record/);
     const strict = await run(r.dir, ['finalize', '--hook', '--strict']);
     expect(strict.code).toBe(3);
   });
 
   it('verify exits 1 on a modified ledger file and 0 when clean', async () => {
     const r = await repoWithLedger();
-    r.commitFiles({ '.warden/entries/x.json': '{}\n' }, 'add');
+    r.commitFiles({ '.vestry/entries/x.json': '{}\n' }, 'add');
     expect((await run(r.dir, ['verify'])).code).toBe(0);
-    r.commitFiles({ '.warden/entries/x.json': '{"changed":1}\n' }, 'tamper');
+    r.commitFiles({ '.vestry/entries/x.json': '{"changed":1}\n' }, 'tamper');
     const res = await run(r.dir, ['verify']);
     expect(res.code).toBe(1);
     expect(res.err).toMatch(/immutable/);

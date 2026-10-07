@@ -17,7 +17,7 @@ import {
   record,
   indexFiles,
   validateIntegrity,
-  WardenError,
+  VestryError,
   writeChangeset,
 } from '../src/index.js';
 import type { StatusHunk } from '../src/index.js';
@@ -99,11 +99,11 @@ describe('status and record', () => {
     expect(hunks.map((h) => h.id)).toContain(id);
   });
 
-  it('ignores lockfiles, build output and .warden itself', async () => {
+  it('ignores lockfiles, build output and .vestry itself', async () => {
     const r = await setup();
     r.write('package-lock.json', '{}\n')
       .write('dist/out.js', 'x\n')
-      .write('.warden/entries/zzz.json', '{}\n')
+      .write('.vestry/entries/zzz.json', '{}\n')
       .write('real.ts', 'y\n');
     expect((await computeStatus(r.dir)).hunks.map((h) => h.file)).toEqual(['real.ts']);
   });
@@ -178,7 +178,7 @@ describe('status and record', () => {
     ).toThrow(/do not pass line numbers/);
     expect(() =>
       parseRecordInput({ changeset: { title: '', reasoning: 'R' }, changes: [{ hunks: [real] }] }),
-    ).toThrow(WardenError);
+    ).toThrow(VestryError);
     expect(() => parseRecordInput({ changeset: { title: 'T', reasoning: 'R' }, changes: [] })).toThrow(
       /at least one change/,
     );
@@ -203,8 +203,8 @@ describe('finalize', () => {
     expect(result.changesetsWritten).toEqual([s.changesetId]);
     expect(stagedNames(r).sort()).toEqual(
       [
-        '.warden/changesets/' + s.changesetId + '.json',
-        '.warden/entries/' + result.entryId + '.json',
+        '.vestry/changesets/' + s.changesetId + '.json',
+        '.vestry/entries/' + result.entryId + '.json',
         'a.txt',
       ].sort(),
     );

@@ -12,8 +12,8 @@ import {
   repairLedgerIndex,
   Report,
   verifyImmutability,
-  WardenError,
-} from '@warden/core';
+  VestryError,
+} from '@vestry/core';
 import type {
   FinalizeResult,
   FoundChangeset,
@@ -21,7 +21,7 @@ import type {
   RecordSummary,
   StatusResult,
   VerifyResult,
-} from '@warden/core';
+} from '@vestry/core';
 import { readInput } from './io.js';
 import type { CommandOutput, Ctx } from './output.js';
 
@@ -117,7 +117,7 @@ export async function cmdChangesetCreate(
     try {
       raw = JSON.parse(await readInput(ctx.io, opts.input));
     } catch (e) {
-      throw new WardenError('INVALID_INPUT', `could not read changeset JSON: ${(e as Error).message}`);
+      throw new VestryError('INVALID_INPUT', `could not read changeset JSON: ${(e as Error).message}`);
     }
   } else {
     raw = {
@@ -131,7 +131,7 @@ export async function cmdChangesetCreate(
   }
   const parsed = NewChangesetInputSchema.safeParse(raw);
   if (!parsed.success)
-    throw new WardenError(
+    throw new VestryError(
       'INVALID_INPUT',
       parsed.error.issues.map((i) => `${i.path.join('.') || 'input'}: ${i.message}`).join('; '),
     );
@@ -157,11 +157,11 @@ export async function cmdRecord(
     try {
       raw = JSON.parse(await readInput(ctx.io, opts.input));
     } catch (e) {
-      throw new WardenError('INVALID_INPUT', `could not read record JSON: ${(e as Error).message}`);
+      throw new VestryError('INVALID_INPUT', `could not read record JSON: ${(e as Error).message}`);
     }
   } else {
     if (!opts.changeset)
-      throw new WardenError(
+      throw new VestryError(
         'USAGE',
         'give --changeset <id> (or use --input - and pipe JSON on stdin to create one)',
       );

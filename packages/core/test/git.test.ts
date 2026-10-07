@@ -19,11 +19,11 @@ import {
   matchesReverted,
   resolveRev,
   worktreeStatus,
-  WardenError,
+  VestryError,
   objectExists,
   gitIdentity,
 } from '../src/index.js';
-import { lines, TestRepo } from './helpers/repo.js';
+import { lines, realPath, TestRepo } from './helpers/repo.js';
 
 const repos: TestRepo[] = [];
 afterEach(() => {
@@ -65,10 +65,10 @@ describe('repo discovery and state', () => {
   });
 
   it('throws NOT_A_REPO outside a repository', async () => {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'warden-norepo-'));
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'vestry-norepo-'));
     try {
       await expect(discoverRepo(dir)).rejects.toMatchObject({ code: 'NOT_A_REPO' });
-      await expect(discoverRepo(dir)).rejects.toBeInstanceOf(WardenError);
+      await expect(discoverRepo(dir)).rejects.toBeInstanceOf(VestryError);
     } finally {
       fs.rmSync(dir, { recursive: true, force: true });
     }
@@ -91,7 +91,7 @@ describe('repo discovery and state', () => {
     origin.commitFiles({ 'a.txt': '1\n' }, 'one');
     origin.commitFiles({ 'a.txt': '2\n' }, 'two');
     origin.commitFiles({ 'a.txt': '3\n' }, 'three');
-    const clone = path.join(os.tmpdir(), `warden-shallow-${Date.now()}`);
+    const clone = path.join(os.tmpdir(), `vestry-shallow-${Date.now()}`);
     try {
       origin.git('clone', '-q', '--depth', '1', `file://${origin.dir.replace(/\\/g, '/')}`, clone);
       expect((await discoverRepo(clone)).shallow).toBe(true);
@@ -103,12 +103,12 @@ describe('repo discovery and state', () => {
   it('detects a linked worktree', async () => {
     const r = mk();
     r.commitFiles({ 'a.txt': 'a\n' }, 'c');
-    const wt = path.join(os.tmpdir(), `warden-wt-${Date.now()}`);
+    const wt = path.join(os.tmpdir(), `vestry-wt-${Date.now()}`);
     try {
       r.git('worktree', 'add', '-q', wt, '-b', 'other');
       const info = await discoverRepo(wt);
       expect(info.isLinkedWorktree).toBe(true);
-      expect(path.resolve(info.root)).toBe(path.resolve(wt));
+      expect(path.resolve(info.root)).toBe(realPath(wt));
     } finally {
       r.tryGit('worktree', 'remove', '--force', wt);
       fs.rmSync(wt, { recursive: true, force: true });
@@ -195,12 +195,12 @@ describe('snapshots and blobs', () => {
 describe('ownership and reverts', () => {
   it('maps files to the commit that added them', async () => {
     const r = mk();
-    const c1 = r.commitFiles({ '.warden/entries/a.json': '{}\n' }, 'one');
-    const c2 = r.commitFiles({ '.warden/entries/b.json': '{}\n', 'other.txt': 'x\n' }, 'two');
-    r.write('.warden/entries/a.json', '{"edited":true}\n').add().commit('edit');
-    const { owners, degraded } = await ownerCommits(r.dir, 'HEAD', ['.warden/entries'], false);
-    expect(owners.get('.warden/entries/a.json')).toBe(c1);
-    expect(owners.get('.warden/entries/b.json')).toBe(c2);
+    const c1 = r.commitFiles({ '.vestry/entries/a.json': '{}\n' }, 'one');
+    const c2 = r.commitFiles({ '.vestry/entries/b.json': '{}\n', 'other.txt': 'x\n' }, 'two');
+    r.write('.vestry/entries/a.json', '{"edited":true}\n').add().commit('edit');
+    const { owners, degraded } = await ownerCommits(r.dir, 'HEAD', ['.vestry/entries'], false);
+    expect(owners.get('.vestry/entries/a.json')).toBe(c1);
+    expect(owners.get('.vestry/entries/b.json')).toBe(c2);
     expect(owners.has('other.txt')).toBe(false);
     expect(degraded).toBe(false);
   });

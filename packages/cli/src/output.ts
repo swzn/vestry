@@ -1,6 +1,6 @@
 // The one place that prints results (human or --json) and maps findings to exit codes.
-import { ExitCode, isWardenError, Report, toEnvelope } from '@warden/core';
-import type { Envelope, Finding } from '@warden/core';
+import { ExitCode, isVestryError, Report, toEnvelope } from '@vestry/core';
+import type { Envelope, Finding } from '@vestry/core';
 import type { IO } from './io.js';
 
 export interface Ctx {
@@ -48,7 +48,7 @@ export async function execute<T>(ctx: Ctx, fn: () => Promise<CommandOutput<T>>):
   try {
     out = await fn();
   } catch (e) {
-    const err = isWardenError(e)
+    const err = isVestryError(e)
       ? { code: e.code, message: e.message, exit: e.exitCode }
       : { code: 'INTERNAL', message: (e as Error).message ?? String(e), exit: ExitCode.Error };
     const report = new Report().error(err.code, err.message);

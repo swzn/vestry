@@ -17,29 +17,29 @@ describe('repairLedgerIndex', () => {
   it('restores ledger files staged as deleted that still exist on disk', async () => {
     const r = mk();
     r.commitFiles(
-      { '.warden/entries/a.json': '{}\n', '.warden/changesets/c-aaaa.json': '{}\n', 'code.ts': 'x\n' },
+      { '.vestry/entries/a.json': '{}\n', '.vestry/changesets/c-aaaa.json': '{}\n', 'code.ts': 'x\n' },
       'c',
     );
-    r.git('rm', '--cached', '-q', '.warden/entries/a.json', '.warden/changesets/c-aaaa.json', 'code.ts');
-    expect(r.git('status', '--porcelain')).toContain('D  .warden/entries/a.json');
+    r.git('rm', '--cached', '-q', '.vestry/entries/a.json', '.vestry/changesets/c-aaaa.json', 'code.ts');
+    expect(r.git('status', '--porcelain')).toContain('D  .vestry/entries/a.json');
     const repaired = await repairLedgerIndex(r.dir);
-    expect(repaired.sort()).toEqual(['.warden/changesets/c-aaaa.json', '.warden/entries/a.json']);
+    expect(repaired.sort()).toEqual(['.vestry/changesets/c-aaaa.json', '.vestry/entries/a.json']);
     const status = r.git('status', '--porcelain');
-    expect(status).not.toContain('.warden');
+    expect(status).not.toContain('.vestry');
     expect(status).toContain('D  code.ts'); // only ledger paths are touched
   });
 
   it('leaves genuinely deleted ledger files alone', async () => {
     const r = mk();
-    r.commitFiles({ '.warden/entries/a.json': '{}\n' }, 'c');
-    r.git('rm', '-q', '.warden/entries/a.json');
+    r.commitFiles({ '.vestry/entries/a.json': '{}\n' }, 'c');
+    r.git('rm', '-q', '.vestry/entries/a.json');
     expect(await repairLedgerIndex(r.dir)).toEqual([]);
-    expect(r.git('status', '--porcelain')).toContain('D  .warden/entries/a.json');
+    expect(r.git('status', '--porcelain')).toContain('D  .vestry/entries/a.json');
   });
 
   it('does nothing when the index is consistent', async () => {
     const r = mk();
-    r.commitFiles({ '.warden/entries/a.json': '{}\n' }, 'c');
+    r.commitFiles({ '.vestry/entries/a.json': '{}\n' }, 'c');
     expect(await repairLedgerIndex(r.dir)).toEqual([]);
   });
 });

@@ -1,9 +1,9 @@
 // Product name and the names derived from it. Kept in one place so a rename touches a single file.
-export const PRODUCT_NAME = 'Warden';
-export const BIN_NAME = 'warden';
-export const DIR_NAME = '.warden';
-export const ENV_PREFIX = 'WARDEN';
-export const IGNORE_FILE = '.wardenignore';
+export const PRODUCT_NAME = 'Vestry';
+export const BIN_NAME = 'vestry';
+export const DIR_NAME = '.vestry';
+export const ENV_PREFIX = 'VESTRY';
+export const IGNORE_FILE = '.vestryignore';
 export const CONFIG_FILE = 'config.json';
 
 export const SCHEMA_VERSION = 1;

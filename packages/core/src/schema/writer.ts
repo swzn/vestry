@@ -1,7 +1,7 @@
 // Canonical serialization and write-once, atomic file creation.
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { WardenError } from '../errors.js';
+import { VestryError } from '../errors.js';
 import { ledgerPaths, REL } from './layout.js';
 import type { Changeset, Entry } from './schemas.js';
 
@@ -86,7 +86,7 @@ export async function writeOnce(file: string, content: string): Promise<void> {
     await fs.link(tmp, file);
   } catch (e) {
     if ((e as NodeJS.ErrnoException).code === 'EEXIST') {
-      throw new WardenError(
+      throw new VestryError(
         'WRITE_ONCE',
         `${path.basename(file)} already exists; ledger files are never overwritten.`,
       );

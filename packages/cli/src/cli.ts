@@ -1,6 +1,7 @@
 import path from 'node:path';
-import { BIN_NAME, ExitCode, MIN_NODE_VERSION, PRODUCT_NAME } from '@warden/core';
+import { BIN_NAME, ENV_PREFIX, ExitCode, MIN_NODE_VERSION, PRODUCT_NAME } from '@vestry/core';
 import { Command, CommanderError } from 'commander';
+import pkg from '../package.json' with { type: 'json' };
 import {
   cmdChangesetCreate,
   cmdChangesetFind,
@@ -39,9 +40,10 @@ export async function main(argv: string[], io: IO = defaultIO(process.argv[1] ??
   program
     .name(BIN_NAME)
     .description(`${PRODUCT_NAME}: record why code changed, next to the code.`)
+    .version(pkg.version, '-V, --version', 'print the version')
     .option('--cwd <dir>', 'run as if started in this directory')
     .option('--json', 'machine-readable output')
-    .option('--strict', 'treat warnings as failures (also WARDEN_STRICT=1)')
+    .option('--strict', `treat warnings as failures (also ${ENV_PREFIX}_STRICT=1)`)
     .option('--quiet', 'only print errors')
     .exitOverride()
     .configureOutput({ writeOut: (s) => io.out(s), writeErr: (s) => io.err(s) });
@@ -51,7 +53,7 @@ export async function main(argv: string[], io: IO = defaultIO(process.argv[1] ??
     return {
       io,
       json: !!o.json,
-      strict: !!o.strict || process.env.WARDEN_STRICT === '1',
+      strict: !!o.strict || process.env[`${ENV_PREFIX}_STRICT`] === '1',
       quiet: !!o.quiet,
       cwd: o.cwd ? path.resolve(io.cwd, o.cwd) : io.cwd,
     };

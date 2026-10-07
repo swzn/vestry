@@ -161,7 +161,7 @@ describe('buildHunks', () => {
     expect(ig.isIgnored('generated/x.ts')).toBe(true);
     expect(ig.isIgnored('src/a.snap')).toBe(true);
     expect(ig.isIgnored('src/a.ts')).toBe(false);
-    expect(ig.isIgnored('.warden/entries/x.json')).toBe(true);
+    expect(ig.isIgnored('.vestry/entries/x.json')).toBe(true);
     expect(ig.isIgnored('node_modules/x/index.js')).toBe(true);
   });
 });

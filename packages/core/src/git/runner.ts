@@ -1,7 +1,7 @@
 // Every git invocation goes through here: no shell, a stable locale, no pager and no prompts.
 import { spawn } from 'node:child_process';
 import { MIN_GIT_VERSION } from '../constants.js';
-import { WardenError } from '../errors.js';
+import { VestryError } from '../errors.js';
 
 export interface GitRunOptions {
   cwd: string;
@@ -33,7 +33,7 @@ function baseEnv(extra?: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
   };
 }
 
-/** Run git and return raw output. Throws WardenError on spawn failure or unexpected exit code. */
+/** Run git and return raw output. Throws VestryError on spawn failure or unexpected exit code. */
 export function runGitRaw(args: string[], opts: GitRunOptions): Promise<GitRawResult> {
   const ok = opts.okExitCodes ?? [0];
   return new Promise((resolve, reject) => {
@@ -51,7 +51,7 @@ export function runGitRaw(args: string[], opts: GitRunOptions): Promise<GitRawRe
       settled = true;
       child.kill();
       reject(
-        new WardenError('GIT_FAILED', `git ${args[0] ?? ''} timed out after ${opts.timeoutMs ?? 120000}ms`),
+        new VestryError('GIT_FAILED', `git ${args[0] ?? ''} timed out after ${opts.timeoutMs ?? 120000}ms`),
       );
     }, opts.timeoutMs ?? 120_000);
 
@@ -62,8 +62,8 @@ export function runGitRaw(args: string[], opts: GitRunOptions): Promise<GitRawRe
       settled = true;
       clearTimeout(timer);
       if (e.code === 'ENOENT')
-        reject(new WardenError('GIT_MISSING', 'git was not found on PATH. Install git to use this tool.'));
-      else reject(new WardenError('GIT_FAILED', `could not run git: ${e.message}`));
+        reject(new VestryError('GIT_MISSING', 'git was not found on PATH. Install git to use this tool.'));
+      else reject(new VestryError('GIT_FAILED', `could not run git: ${e.message}`));
     });
     child.on('close', (code) => {
       if (settled) return;
@@ -76,7 +76,7 @@ export function runGitRaw(args: string[], opts: GitRunOptions): Promise<GitRawRe
       };
       if (!ok.includes(result.code)) {
         reject(
-          new WardenError(
+          new VestryError(
             'GIT_FAILED',
             `git ${args.join(' ')} failed (exit ${result.code}): ${result.stderr.trim() || '(no output)'}`,
             {
@@ -128,12 +128,12 @@ export async function assertGitVersion(cwd: string): Promise<[number, number, nu
   if (!cachedVersion) {
     const text = await git(['--version'], { cwd });
     const v = parseGitVersion(text);
-    if (!v) throw new WardenError('GIT_FAILED', `could not parse git version from: ${text.trim()}`);
+    if (!v) throw new VestryError('GIT_FAILED', `could not parse git version from: ${text.trim()}`);
     cachedVersion = v;
   }
   const min = MIN_GIT_VERSION.split('.').map(Number);
   if (compareVersions(cachedVersion, min) < 0) {
-    throw new WardenError(
+    throw new VestryError(
       'GIT_TOO_OLD',
       `git ${cachedVersion.join('.')} is too old; ${MIN_GIT_VERSION} or newer is required (for blame --ignore-revs-file).`,
     );

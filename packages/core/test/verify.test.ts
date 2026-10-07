@@ -21,7 +21,7 @@ const verify = async (r: TestRepo, opts: Parameters<typeof verifyImmutability>[2
 const codes = (res: Awaited<ReturnType<typeof verify>>) =>
   res.report.findings.map((f) => `${f.severity}:${f.code}`);
 
-const E = (n: string) => `.warden/entries/${n}.json`;
+const E = (n: string) => `.vestry/entries/${n}.json`;
 
 describe('verify (history mode, no upstream)', () => {
   it('is clean when ledger files are only ever added', async () => {
@@ -157,7 +157,7 @@ describe('verify (shallow clones)', () => {
     const origin = mk();
     origin.commitFiles({ 'a.txt': '1\n' }, 'one');
     origin.commitFiles({ 'a.txt': '2\n' }, 'two');
-    const clone = path.join(os.tmpdir(), `warden-verify-shallow-${Date.now()}`);
+    const clone = path.join(os.tmpdir(), `vestry-verify-shallow-${Date.now()}`);
     try {
       origin.git('clone', '-q', '--depth', '1', `file://${origin.dir.replace(/\\/g, '/')}`, clone);
       const repo = await discoverRepo(clone);

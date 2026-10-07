@@ -1,7 +1,7 @@
 // Repository discovery and state detection.
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { WardenError } from '../errors.js';
+import { VestryError } from '../errors.js';
 import { assertGitVersion, git, gitTry } from './runner.js';
 
 export interface RepoInfo {
@@ -24,10 +24,10 @@ export async function discoverRepo(cwd: string): Promise<RepoInfo> {
     { cwd, okExitCodes: [0, 128] },
   );
   if (r.code !== 0)
-    throw new WardenError('NOT_A_REPO', `${cwd} is not inside a git repository (or has no working tree).`);
+    throw new VestryError('NOT_A_REPO', `${cwd} is not inside a git repository (or has no working tree).`);
   const [top, gitDirRaw, commonRaw, shallow] = r.stdout.split('\n');
   if (!top || !gitDirRaw || !commonRaw)
-    throw new WardenError('GIT_FAILED', 'unexpected output from git rev-parse');
+    throw new VestryError('GIT_FAILED', 'unexpected output from git rev-parse');
   const root = path.resolve(top);
   const gitDir = path.resolve(gitDirRaw);
   const commonDir = path.resolve(cwd, commonRaw);

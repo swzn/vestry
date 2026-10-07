@@ -1,6 +1,6 @@
 // Immutability check: ledger files may be added, but never modified or deleted once published.
 // A deletion is allowed when it comes from reverting the commit that added the file.
-import { WardenError } from './errors.js';
+import { VestryError } from './errors.js';
 import { git, gitTry } from './git/runner.js';
 import { mergeBase, resolveRev } from './git/repo.js';
 import type { RepoInfo } from './git/repo.js';
@@ -74,7 +74,7 @@ export async function verifyImmutability(
   opts: VerifyOptions = {},
 ): Promise<{ report: Report; result: VerifyResult }> {
   if (repo.shallow) {
-    throw new WardenError(
+    throw new VestryError(
       'SHALLOW_REPO',
       'this is a shallow clone; verifying immutability needs full history. Fetch it (for example `git fetch --unshallow`, or `fetch-depth: 0` in CI) and run again.',
     );
@@ -88,7 +88,7 @@ export async function verifyImmutability(
   if (opts.against) {
     base = await mergeBase(root, 'HEAD', opts.against);
     if (!base)
-      throw new WardenError(
+      throw new VestryError(
         'INVALID_INPUT',
         `cannot compare against "${opts.against}": no common ancestor or unknown ref`,
       );
