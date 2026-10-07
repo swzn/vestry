@@ -10,4 +10,7 @@ coverage/
 # copied in by `npm pack` (see scripts/package-docs.mjs)
 packages/cli/README.md
 packages/cli/LICENSE
+
+# package tarballs and downloaded release archives
 *.tgz
+*.tar.gz

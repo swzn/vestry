@@ -7,6 +7,14 @@ All notable changes to Vestry are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-10-07
+
+### Changed
+
+- This is the first version published by the automated release workflow, with a provenance attestation that links
+  the package to the commit and workflow run that built it. There are no functional changes to the CLI.
+- Contributor documentation covers releasing, versioning and how the first npm release behaves.
+
 ## [0.1.0] - 2026-10-07
 
 First public release.
@@ -33,5 +41,6 @@ First public release.
 - The git hooks fall back to a `vestry` on `PATH` when the CLI path recorded by `init` no longer exists, and warn
   instead of failing the commit when neither is available.
 
-[Unreleased]: https://github.com/swzn/vestry/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/swzn/vestry/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/swzn/vestry/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/swzn/vestry/releases/tag/v0.1.0

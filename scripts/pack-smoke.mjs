@@ -76,7 +76,7 @@ try {
   step(`package contains only ${expectedFiles.join(', ')}`);
 
   // 4. the bin link works
-  const version = npm('vestry --version', ['exec', '--no-install', '--', 'vestry', '--version'], project).stdout.trim();
+  const version = npm('vestry --version', ['exec', '--no', '--', 'vestry', '--version'], project).stdout.trim();
   check(version === expectedVersion, `vestry --version printed "${version}", expected "${expectedVersion}"`);
   step(`vestry --version is ${version}`);
 
