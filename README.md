@@ -1,6 +1,7 @@
 # Vestry
 
 [![CI](https://github.com/swzn/vestry/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/swzn/vestry/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/vestry.svg)](https://www.npmjs.com/package/vestry)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/swzn/vestry/blob/main/LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D24.19-brightgreen.svg)](https://nodejs.org)
 
@@ -11,8 +12,9 @@ why a change was made, linked to the exact lines it touched. They live in your r
 clones, branches and forks, and anyone (a teammate, a future you, or an AI coding agent) can look up the reasoning
 before changing the code again.
 
-> **Status:** early development (`0.0.x`). The commands below work and are tested, but the ledger format may still
-> change before 1.0, and the package is not published to npm yet.
+> **Status:** early development (`0.x`). The commands below work and are tested, but the ledger format may still
+> change before 1.0. Changes are listed in the
+> [changelog](https://github.com/swzn/vestry/blob/main/CHANGELOG.md).
 
 ## How it works
 
@@ -35,21 +37,18 @@ Vestry is plain JavaScript with no native modules.
 
 ## Install
 
-Vestry is installed from source for now:
-
 ```bash
-git clone https://github.com/swzn/vestry.git
-cd vestry
-npm ci
-npm run build
+npm install --global vestry
+vestry --version
 ```
 
-Inside the clone, run it with `npx vestry --help`. To use it in other repositories, put `vestry/node_modules/.bin`
-on your `PATH` (or run `npm link` inside `packages/cli`).
+Or add it to a single project with `npm install --save-dev vestry` and run it as `npx vestry`. To work on Vestry
+itself, see [CONTRIBUTING.md](https://github.com/swzn/vestry/blob/main/CONTRIBUTING.md).
 
-`vestry init --git-hooks` records the path of the CLI in your git hooks, so keep the clone and its `dist/` folder
-where they are. If that path disappears, the hooks fall back to a `vestry` found on your `PATH`; if there is none,
-they warn on every commit instead of failing it. Re-run `init --git-hooks` to repair them.
+`vestry init --git-hooks` records the path of the CLI in your git hooks. Avoid running it from a one-off `npx`
+download, because npm can clear that cache. If the recorded path disappears for any reason, the hooks fall back to a
+`vestry` found on your `PATH`; if there is none, they warn on every commit instead of failing it. Re-run
+`vestry init --git-hooks` to repair them.
 
 ## Use
 
