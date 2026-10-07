@@ -80,6 +80,18 @@ jobs:
       - run: npm test
       - run: npm run pack:smoke
 
+      # Rehearse the staging command as a dry run (it needs no npm credentials), so a mistake in its arguments
+      # or in the tarball path shows up in a rehearsal instead of on a real tag. Keep it in step with `publish`.
+      - name: Rehearse staging (dry run)
+        env:
+          NPM_TAG: ${{ steps.version.outputs.npm_tag }}
+        run: |
+          npm install -g npm@latest
+          mkdir release
+          npm pack -w packages/cli --pack-destination release
+          TARBALL="./$(ls release/*.tgz)"
+          npm stage publish "$TARBALL" --tag "$NPM_TAG" --dry-run
+
   publish:
     if: github.event_name == 'push'
     needs: verify
@@ -103,7 +115,8 @@ jobs:
         run: |
           mkdir release
           npm pack -w packages/cli --pack-destination release
-          echo "tarball=$(ls release/*.tgz)" >> "$GITHUB_OUTPUT"
+          # The "./" matters: npm reads a bare "dir/name.tgz" as GitHub "owner/repo" shorthand and tries to fetch it.
+          echo "tarball=./$(ls release/*.tgz)" >> "$GITHUB_OUTPUT"
 
       # Trusted publishing is configured on an existing package, so the very first version cannot be staged by
       # this workflow. In that case the draft GitHub Release below carries the verified tarball and a notice
