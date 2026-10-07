@@ -1,0 +1,146 @@
+name: release
+
+# Push a tag like v0.1.0 (after the version-bump PR has merged to main) to start a release:
+#   1. verify: the tag, version and changelog agree, and everything passes (typecheck, lint, tests, tarball test)
+#   2. publish: stage the tarball on npm and draft the GitHub Release
+# The release only goes live when a maintainer approves the staged package on npmjs.com with 2FA.
+# See "Releasing" in CONTRIBUTING.md.
+on:
+  push:
+    tags: ['v*']
+  # Rehearsal: run from the Actions tab to execute every check without publishing anything.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      npm_tag: ${{ steps.version.outputs.npm_tag }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24.19.0'
+          cache: npm
+      - run: npm ci
+
+      - name: Read the package version
+        id: version
+        run: |
+          VERSION="$(node -p "require('./packages/cli/package.json').version")"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          # npm needs an explicit dist-tag for pre-releases; keep them off `latest`.
+          if [[ "$VERSION" == *-* ]]; then echo "npm_tag=next" >> "$GITHUB_OUTPUT"; else echo "npm_tag=latest" >> "$GITHUB_OUTPUT"; fi
+
+      - name: Check the tag matches the package version
+        if: github.event_name == 'push'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          if [ "v$VERSION" != "$GITHUB_REF_NAME" ]; then
+            echo "Tag $GITHUB_REF_NAME does not match packages/cli/package.json version $VERSION"
+            exit 1
+          fi
+
+      - name: Check the tagged commit is on main
+        if: github.event_name == 'push'
+        run: |
+          git fetch --no-tags origin main
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/main
+
+      - name: Check this version is not already on npm
+        if: github.event_name == 'push'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          if npm view "vestry@$VERSION" version > /dev/null 2>&1; then
+            echo "vestry@$VERSION is already published"
+            exit 1
+          fi
+
+      - name: Check the changelog has notes for this version
+        if: github.event_name == 'push'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: node scripts/release-notes.mjs "$VERSION" > /dev/null
+
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+      - run: npm run pack:smoke
+
+  publish:
+    if: github.event_name == 'push'
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write # create the draft GitHub Release
+      id-token: write # npm trusted publishing (OIDC); no npm token is stored anywhere
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24.19.0'
+          cache: npm
+      # Staged publishing and trusted publishing need a newer npm than the one bundled with Node.
+      - run: npm install -g npm@latest
+      - run: npm ci
+
+      - name: Pack the tarball
+        id: pack
+        run: |
+          mkdir release
+          npm pack -w vestry --pack-destination release
+          echo "tarball=$(ls release/*.tgz)" >> "$GITHUB_OUTPUT"
+
+      # Trusted publishing is configured on an existing package, so the very first version cannot be staged by
+      # this workflow. In that case the draft GitHub Release below carries the verified tarball and a notice
+      # tells the maintainer to publish it by hand.
+      - name: Check whether the package exists on npm yet
+        id: exists
+        env:
+          VERSION: ${{ needs.verify.outputs.version }}
+        run: |
+          if out="$(npm view vestry version 2>&1)"; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          elif echo "$out" | grep -q E404; then
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=First release::vestry is not on npm yet, so nothing was staged. Publish the tarball attached to the draft GitHub Release by hand: npm publish ./vestry-$VERSION.tgz"
+          else
+            echo "$out"
+            exit 1
+          fi
+
+      - name: Stage the release on npm
+        if: steps.exists.outputs.exists == 'true'
+        env:
+          TARBALL: ${{ steps.pack.outputs.tarball }}
+          NPM_TAG: ${{ needs.verify.outputs.npm_tag }}
+        # Staging needs no 2FA and publishes nothing yet: a maintainer approves it on npmjs.com (Staged Packages).
+        run: npm stage publish "$TARBALL" --tag "$NPM_TAG" --provenance
+
+      - name: Draft the GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TARBALL: ${{ steps.pack.outputs.tarball }}
+          VERSION: ${{ needs.verify.outputs.version }}
+        run: |
+          node scripts/release-notes.mjs "$VERSION" > release/notes.md
+          PRERELEASE=""
+          if [[ "$VERSION" == *-* ]]; then PRERELEASE="--prerelease"; fi
+          gh release create "$GITHUB_REF_NAME" "$TARBALL" \
+            --draft --verify-tag $PRERELEASE \
+            --title "$GITHUB_REF_NAME" \
+            --notes-file release/notes.md

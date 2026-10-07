@@ -1,6 +1,7 @@
 // End to end: the built binary, a real pre-commit hook, and real `git commit`s.
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { lines, TestRepo } from '../../core/test/helpers/repo.js';
@@ -176,6 +177,71 @@ describe('the pre-commit hook', () => {
     expect(vestry(r, ['init', '--git-hooks']).code).toBe(0);
     expect(fs.readFileSync(r.abs('.git/hooks/pre-commit'), 'utf8')).toBe(hook);
     expect(hook).not.toContain('\r');
+  });
+
+  // `npm test` puts node_modules/.bin (which holds a `vestry` shim) on PATH. Drop those entries so these
+  // tests control exactly where `vestry` can be found.
+  const pathKey = Object.keys(process.env).find((k) => k.toLowerCase() === 'path') ?? 'PATH';
+  const withPath = (...first: string[]): NodeJS.ProcessEnv => {
+    const rest = (process.env[pathKey] ?? '')
+      .split(path.delimiter)
+      .filter((p) => p && !/node_modules[\\/]\.bin$/.test(p));
+    return { ...process.env, [pathKey]: [...first, ...rest].join(path.delimiter) };
+  };
+
+  // Simulates an npx cache cleanup or a moved install: the CLI path recorded by `init` no longer exists.
+  const breakRecordedPath = (r: TestRepo) => {
+    const hookFile = r.abs('.git/hooks/pre-commit');
+    const recorded = BIN.replace(/\\/g, '/');
+    const hook = fs.readFileSync(hookFile, 'utf8');
+    expect(hook).toContain(recorded);
+    fs.writeFileSync(hookFile, hook.split(recorded).join('/nonexistent/vestry/dist/bin.js'));
+  };
+
+  it('falls back to the CLI on PATH when the recorded path is gone', async () => {
+    const r = await project();
+    breakRecordedPath(r);
+    const shimDir = fs.mkdtempSync(path.join(os.tmpdir(), 'vestry-shim-'));
+    try {
+      fs.writeFileSync(
+        path.join(shimDir, 'vestry'),
+        `#!/bin/sh\nexec node '${BIN.replace(/\\/g, '/')}' "$@"\n`,
+        { mode: 0o755 },
+      );
+      r.write('a.txt', lines(20).replace('line 5', 'FIVE'));
+      recordAll(r, 'via PATH');
+      r.add('a.txt');
+      const c = spawnSync('git', ['commit', '-q', '-m', 'via PATH'], {
+        cwd: r.dir,
+        encoding: 'utf8',
+        env: withPath(shimDir),
+      });
+      expect(c.status).toBe(0);
+      expect(c.stderr).toMatch(/wrote entry/);
+      expect(entryFiles(r)).toHaveLength(1);
+    } finally {
+      fs.rmSync(shimDir, { recursive: true, force: true });
+    }
+  });
+
+  // Only meaningful when no real `vestry` is installed on the machine's own PATH.
+  const vestryInstalled =
+    spawnSync('vestry', ['--version'], { shell: true, encoding: 'utf8', env: withPath() }).status === 0;
+  it.skipIf(vestryInstalled)('warns, and does not fail the commit, when no CLI can be found', async () => {
+    const r = await project();
+    breakRecordedPath(r);
+    r.write('a.txt', lines(20).replace('line 5', 'FIVE'));
+    recordAll(r, 'nothing to run');
+    r.add('a.txt');
+    const c = spawnSync('git', ['commit', '-q', '-m', 'no cli'], {
+      cwd: r.dir,
+      encoding: 'utf8',
+      env: withPath(),
+    });
+    expect(c.status).toBe(0);
+    expect(c.stderr).toMatch(/vestry: cannot find the CLI/);
+    expect(c.stderr).toMatch(/Re-run: vestry init --git-hooks/);
+    expect(entryFiles(r)).toHaveLength(0);
   });
 });
 

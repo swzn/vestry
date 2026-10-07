@@ -17,16 +17,28 @@ export const MANAGED_HOOKS = [
 ] as const;
 export type ManagedHook = (typeof MANAGED_HOOKS)[number];
 
-/** The shell snippet for one hook. LF endings only. */
+/** Quote a string for sh so that it is always a single literal word. */
+const shellQuote = (s: string): string => `'${s.replace(/'/g, `'\\''`)}'`;
+
+/**
+ * The shell snippet for one hook. LF endings only.
+ *
+ * It runs the CLI at the path recorded by `init`. If that file is gone (an npx cache was cleared, the
+ * package was moved or reinstalled elsewhere), it falls back to the CLI on PATH, and otherwise says so on
+ * stderr instead of failing the commit.
+ */
 export function hookBlock(cliPath: string, args = 'finalize --hook', blocking = true): string {
-  const bin = cliPath.replace(/\\/g, '/');
+  const bin = shellQuote(cliPath.replace(/\\/g, '/'));
+  const run = (command: string) => `  ${command} ${args} ${blocking ? '|| exit $?' : '|| true'}`;
   return [
     BEGIN,
     `# Do not edit between the markers; re-run \`${BIN_NAME} init --git-hooks\` to update.`,
-    `if [ -f "${bin}" ] && command -v node >/dev/null 2>&1; then`,
-    blocking ? `  node "${bin}" ${args} || exit $?` : `  node "${bin}" ${args} || true`,
+    `if command -v node >/dev/null 2>&1 && [ -f ${bin} ]; then`,
+    run(`node ${bin}`),
+    `elif command -v ${BIN_NAME} >/dev/null 2>&1; then`,
+    run(BIN_NAME),
     'else',
-    `  echo "${BIN_NAME}: cannot run (node or the CLI is missing); skipping" >&2`,
+    `  echo "${BIN_NAME}: cannot find the CLI (its recorded path is gone and ${BIN_NAME} is not on PATH); skipping. Re-run: ${BIN_NAME} init --git-hooks" >&2`,
     'fi',
     END,
     '',

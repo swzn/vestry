@@ -33,6 +33,7 @@ npm ci
 | `npm run lint` | ESLint. |
 | `npm run format` | Prettier. |
 | `npm run schemas` | Regenerate `schemas/` from the zod schemas. |
+| `npm run pack:smoke` | Pack the CLI as `npm publish` would, install the tarball into an empty project and run the walkthrough against it (needs network access; about 15 seconds). |
 
 `PAUSE=0 bash scripts/demo.sh` replays the README walkthrough in a throwaway repository. It is a quick manual smoke
 test of the built CLI, and with the default pauses it is meant for screen recordings.
@@ -46,6 +47,7 @@ test of the built CLI, and with the default pauses it is meant for screen record
    regenerated files.
 4. Keep the pull request small and focused, and explain the why in the description. Vestry is a tool for recording
    reasons, so it should practise that.
+5. If the change is visible to users, add a line under **Unreleased** in [CHANGELOG.md](CHANGELOG.md).
 
 CI runs the tests on Linux, Windows and macOS, so a green run there is the real check.
 
@@ -59,3 +61,48 @@ CI runs the tests on Linux, Windows and macOS, so a green run there is the real 
   directories can contain aliases (`/var` is a symlink on macOS, and Windows may use `RUNNER~1`-style short names)
   that git resolves.
 - Formatting is Prettier (single quotes, 110 columns). `.editorconfig` covers the basics for your editor.
+
+## Versioning
+
+Vestry follows [Semantic Versioning](https://semver.org/), with these rules until 1.0:
+
+- A **minor** release (`0.x.0`) may change command-line flags, output and the ledger file format.
+- A **patch** release (`0.x.y`) only fixes bugs.
+- The ledger files carry a `schemaVersion`. Any change to their format is called out in the
+  [changelog](CHANGELOG.md) with migration notes, and the version of the format is raised.
+- Release tags are named `vX.Y.Z` and always point at a commit on `main`.
+
+## Releasing
+
+For maintainers. Releases are cut from `main`, and nothing is published without a 2FA approval on npm.
+
+1. Make sure `main` is green.
+2. Open a pull request that prepares the release:
+   - rename `## [Unreleased]` in `CHANGELOG.md` to `## [X.Y.Z] - YYYY-MM-DD`, start a new empty
+     `## [Unreleased]` above it, and update the link definitions at the bottom;
+   - bump the version with `npm version X.Y.Z -w packages/cli --no-git-tag-version`.
+3. After it merges, tag the merge commit and push the tag:
+   ```bash
+   git switch main && git pull
+   git tag vX.Y.Z && git push origin vX.Y.Z
+   ```
+4. The **release** workflow verifies that the tag, the package version and the changelog agree, runs every check
+   (including the tarball install test), packs the tarball, and **stages** it on npm. It also drafts a GitHub
+   Release with the changelog notes and the tarball attached.
+5. Approve the staged package on npmjs.com (package page, **Staged Packages** tab) or with `npm stage approve`.
+   Both ask for your 2FA code. Then publish the draft GitHub Release.
+
+To rehearse without publishing anything, run the **release** workflow from the Actions tab: it executes the
+checks and stops before the publish job.
+
+### One-time setup
+
+- On npmjs.com, open the `vestry` package, **Settings → Trusted Publisher**, and add GitHub Actions with
+  owner `swzn`, repository `vestry`, workflow `release.yml`, and no environment. Allow staged publishing only, so
+  the workflow can never publish directly.
+- Under **Publishing access**, choose "Require two-factor authentication and disallow tokens".
+- The first version of a package is published by hand, because trusted publishing is configured on an existing
+  package. The release workflow copes with this: when `vestry` is not on npm yet, it skips staging, drafts the
+  GitHub Release with the verified tarball attached, and prints a notice. Download that tarball and run
+  `npm publish ./vestry-X.Y.Z.tgz` (npm asks for your 2FA code), then do the trusted publisher setup above. That
+  first version has no provenance badge; later releases do.

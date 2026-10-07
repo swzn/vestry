@@ -1,24 +1,52 @@
 {
-  "name": "@vestry/cli",
+  "name": "vestry",
   "version": "0.0.0",
-  "private": true,
   "type": "module",
-  "description": "Vestry command line interface",
+  "description": "Record why code changed, next to the code: immutable, in-repo changesets for humans and AI agents.",
   "license": "MIT",
+  "author": "Sajad Wazin",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/swzn/vestry.git",
     "directory": "packages/cli"
   },
+  "bugs": {
+    "url": "https://github.com/swzn/vestry/issues"
+  },
+  "homepage": "https://github.com/swzn/vestry#readme",
+  "keywords": [
+    "git",
+    "git-hooks",
+    "cli",
+    "ai-agents",
+    "changelog",
+    "provenance",
+    "rationale",
+    "developer-tools"
+  ],
   "bin": {
     "vestry": "./dist/bin.js"
   },
-  "engines": { "node": ">=24.19.0" },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=24.19.0"
+  },
   "scripts": {
-    "build": "tsup"
+    "build": "tsup",
+    "prepack": "node ../../scripts/package-docs.mjs copy && npm run build",
+    "postpack": "node ../../scripts/package-docs.mjs clean"
   },
   "dependencies": {
-    "@vestry/core": "*",
-    "commander": "^15.0.0"
+    "commander": "^15.0.0",
+    "ignore": "^7.0.0",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@vestry/core": "*"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
