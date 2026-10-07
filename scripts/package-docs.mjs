@@ -12,7 +12,7 @@ const mode = process.argv[2];
 
 // `clean` deletes files, so make sure this really is the package directory and not the repository root.
 const manifestPath = path.join(packageDir, 'package.json');
-const isCliPackage = fs.existsSync(manifestPath) && JSON.parse(fs.readFileSync(manifestPath, 'utf8')).name === 'vestry';
+const isCliPackage = fs.existsSync(manifestPath) && JSON.parse(fs.readFileSync(manifestPath, 'utf8')).name === '@vestry/cli';
 if (!isCliPackage || path.resolve(packageDir) === repoRoot) {
   console.error('package-docs: run this from the packages/cli directory (it is used by that package\'s prepack/postpack).');
   process.exit(1);

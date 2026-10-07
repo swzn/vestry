@@ -1,7 +1,7 @@
 # Vestry
 
 [![CI](https://github.com/swzn/vestry/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/swzn/vestry/actions/workflows/ci.yml)
-[![npm](https://img.shields.io/npm/v/vestry.svg)](https://www.npmjs.com/package/vestry)
+[![npm](https://img.shields.io/npm/v/@vestry/cli.svg)](https://www.npmjs.com/package/@vestry/cli)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/swzn/vestry/blob/main/LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D24.19-brightgreen.svg)](https://nodejs.org)
 
@@ -38,11 +38,12 @@ Vestry is plain JavaScript with no native modules.
 ## Install
 
 ```bash
-npm install --global vestry
+npm install --global @vestry/cli
 vestry --version
 ```
 
-Or add it to a single project with `npm install --save-dev vestry` and run it as `npx vestry`. To work on Vestry
+The package is `@vestry/cli`, and it installs the `vestry` command. Or add it to a single project with
+`npm install --save-dev @vestry/cli` and run it as `npx vestry`. To work on Vestry
 itself, see [CONTRIBUTING.md](https://github.com/swzn/vestry/blob/main/CONTRIBUTING.md).
 
 `vestry init --git-hooks` records the path of the CLI in your git hooks. Avoid running it from a one-off `npx`

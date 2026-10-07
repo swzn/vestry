@@ -97,12 +97,12 @@ checks and stops before the publish job.
 
 ### One-time setup
 
-- On npmjs.com, open the `vestry` package, **Settings → Trusted Publisher**, and add GitHub Actions with
+- On npmjs.com, open the `@vestry/cli` package, **Settings → Trusted Publisher**, and add GitHub Actions with
   owner `swzn`, repository `vestry`, workflow `release.yml`, and no environment. Allow staged publishing only, so
   the workflow can never publish directly.
 - Under **Publishing access**, choose "Require two-factor authentication and disallow tokens".
 - The first version of a package is published by hand, because trusted publishing is configured on an existing
-  package. The release workflow copes with this: when `vestry` is not on npm yet, it skips staging, drafts the
+  package. The release workflow copes with this: when `@vestry/cli` is not on npm yet, it skips staging, drafts the
   GitHub Release with the verified tarball attached, and prints a notice. Download that tarball and run
-  `npm publish ./vestry-X.Y.Z.tgz` (npm asks for your 2FA code), then do the trusted publisher setup above. That
+  `npm publish ./vestry-cli-X.Y.Z.tgz --access public` (npm asks for your 2FA code), then do the trusted publisher setup above. That
   first version has no provenance badge; later releases do.

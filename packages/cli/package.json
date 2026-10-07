@@ -1,5 +1,5 @@
 {
-  "name": "vestry",
+  "name": "@vestry/cli",
   "version": "0.1.0",
   "type": "module",
   "description": "Record why code changed, next to the code: immutable, in-repo changesets for humans and AI agents.",
