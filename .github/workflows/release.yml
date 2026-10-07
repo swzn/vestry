@@ -64,8 +64,8 @@ jobs:
         env:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
-          if npm view "vestry@$VERSION" version > /dev/null 2>&1; then
-            echo "vestry@$VERSION is already published"
+          if npm view "@vestry/cli@$VERSION" version > /dev/null 2>&1; then
+            echo "@vestry/cli@$VERSION is already published"
             exit 1
           fi
 
@@ -102,7 +102,7 @@ jobs:
         id: pack
         run: |
           mkdir release
-          npm pack -w vestry --pack-destination release
+          npm pack -w packages/cli --pack-destination release
           echo "tarball=$(ls release/*.tgz)" >> "$GITHUB_OUTPUT"
 
       # Trusted publishing is configured on an existing package, so the very first version cannot be staged by
@@ -113,11 +113,11 @@ jobs:
         env:
           VERSION: ${{ needs.verify.outputs.version }}
         run: |
-          if out="$(npm view vestry version 2>&1)"; then
+          if out="$(npm view @vestry/cli version 2>&1)"; then
             echo "exists=true" >> "$GITHUB_OUTPUT"
           elif echo "$out" | grep -q E404; then
             echo "exists=false" >> "$GITHUB_OUTPUT"
-            echo "::notice title=First release::vestry is not on npm yet, so nothing was staged. Publish the tarball attached to the draft GitHub Release by hand: npm publish ./vestry-$VERSION.tgz"
+            echo "::notice title=First release::@vestry/cli is not on npm yet, so nothing was staged. Publish the tarball attached to the draft GitHub Release by hand: npm publish ./vestry-cli-$VERSION.tgz --access public"
           else
             echo "$out"
             exit 1

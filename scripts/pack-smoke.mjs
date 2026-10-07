@@ -54,7 +54,7 @@ function listFiles(dir, base = dir) {
 
 try {
   // 1. pack (this runs the package's prepack: copy README/LICENSE, build)
-  const packed = npm('npm pack', ['pack', '-w', 'vestry', '--pack-destination', work], repoRoot);
+  const packed = npm('npm pack', ['pack', '-w', 'packages/cli', '--pack-destination', work], repoRoot);
   const tarball = path.join(work, packed.stdout.trim().split(/\r?\n/).at(-1));
   check(fs.existsSync(tarball), `tarball not found at ${tarball}`);
   step(`packed ${path.basename(tarball)}`);
@@ -64,7 +64,7 @@ try {
   fs.mkdirSync(project);
   fs.writeFileSync(path.join(project, 'package.json'), JSON.stringify({ name: 'pack-smoke', private: true }));
   npm('npm install', ['install', tarball, '--no-audit', '--no-fund'], project);
-  const installed = path.join(project, 'node_modules', 'vestry');
+  const installed = path.join(project, 'node_modules', '@vestry', 'cli');
   step('installed the tarball with its dependencies');
 
   // 3. the package contains exactly what we intend to ship
