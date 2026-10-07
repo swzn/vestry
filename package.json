@@ -14,7 +14,8 @@
     "node": ">=24.19.0"
   },
   "scripts": {
-    "build": "npm run build -w @vestry/cli",
+    "build": "npm run build -w packages/cli",
+    "pack:smoke": "node scripts/pack-smoke.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit -p packages/core && tsc --noEmit -p packages/cli",

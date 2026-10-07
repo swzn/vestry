@@ -1,7 +1,7 @@
 # Vestry
 
 [![CI](https://github.com/swzn/vestry/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/swzn/vestry/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/swzn/vestry/blob/main/LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D24.19-brightgreen.svg)](https://nodejs.org)
 
 Record *why* code changed, next to the code.
@@ -47,8 +47,9 @@ npm run build
 Inside the clone, run it with `npx vestry --help`. To use it in other repositories, put `vestry/node_modules/.bin`
 on your `PATH` (or run `npm link` inside `packages/cli`).
 
-`vestry init --git-hooks` writes the absolute path of the CLI into your git hooks, so keep the clone and its
-`dist/` folder where they are, and re-run `init --git-hooks` if you move them.
+`vestry init --git-hooks` records the path of the CLI in your git hooks, so keep the clone and its `dist/` folder
+where they are. If that path disappears, the hooks fall back to a `vestry` found on your `PATH`; if there is none,
+they warn on every commit instead of failing it. Re-run `init --git-hooks` to repair them.
 
 ## Use
 
@@ -186,7 +187,7 @@ parallel sessions, such as two agents working in one checkout, from sharing stat
 ### Driving Vestry from a script or an AI agent
 
 Everything is scriptable: `--json` for output, JSON on stdin for `record`, and no line numbers anywhere. The JSON
-Schemas for the file formats and the `record` input are in [`schemas/`](schemas/). No agent skill ships yet, but the
+Schemas for the file formats and the `record` input are in [`schemas/`](https://github.com/swzn/vestry/tree/main/schemas). No agent skill ships yet, but the
 CLI is designed to be driven by one.
 
 ### Choosing what gets documented
@@ -217,8 +218,8 @@ packages/
   cli/                  the `vestry` command (commander), bundled into one file with tsup
     test/               CLI tests, plus end-to-end tests with real git hooks
 schemas/                generated JSON Schemas (`npm run schemas`)
-scripts/                demo.sh replays the walkthrough above in a throwaway repo
-.github/workflows/      CI: typecheck, lint and tests on Linux, Windows and macOS
+scripts/                demo.sh replays the walkthrough; pack-smoke.mjs tests the npm tarball
+.github/workflows/      CI: typecheck, lint, tests and a tarball install test on Linux, Windows and macOS
 ```
 
 In a repository that uses Vestry:
@@ -241,8 +242,8 @@ In a repository that uses Vestry:
 
 ## Contributing
 
-Bug reports, ideas and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, the test workflow and conventions.
+Bug reports, ideas and pull requests are welcome. See [CONTRIBUTING.md](https://github.com/swzn/vestry/blob/main/CONTRIBUTING.md) for setup, the test workflow and conventions.
 
 ## License
 
-[MIT](LICENSE)
+[MIT](https://github.com/swzn/vestry/blob/main/LICENSE)

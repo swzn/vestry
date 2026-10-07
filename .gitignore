@@ -6,3 +6,8 @@ coverage/
 .env
 .vestry/pending/
 .vestry/.cache/
+
+# copied in by `npm pack` (see scripts/package-docs.mjs)
+packages/cli/README.md
+packages/cli/LICENSE
+*.tgz

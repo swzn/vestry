@@ -41,6 +41,27 @@ describe('managed hook block', () => {
   it('normalizes CRLF in an existing hook', () => {
     expect(applyManagedBlock('#!/bin/sh\r\necho hi\r\n', block)).not.toContain('\r');
   });
+  it('falls back to the CLI on PATH, then to a clear message, when the recorded path is gone', () => {
+    const lines = block.split('\n');
+    const branch = (prefix: string) => lines.findIndex((l) => l.startsWith(prefix));
+    expect(branch('if command -v node')).toBeGreaterThan(-1);
+    expect(branch('elif command -v vestry')).toBeGreaterThan(branch('if command -v node'));
+    expect(lines).toContain('  vestry finalize --hook || exit $?');
+    expect(branch('else')).toBeGreaterThan(branch('elif'));
+    expect(block).toMatch(/echo "vestry: cannot find the CLI .*Re-run: vestry init --git-hooks" >&2/);
+  });
+  it('never lets the non-blocking hook fail a commit, on either branch', () => {
+    const post = hookBlock('/x/bin.js', 'post-commit', false);
+    expect(post).toContain("node '/x/bin.js' post-commit || true");
+    expect(post).toContain('  vestry post-commit || true');
+    expect(post).not.toContain('exit $?');
+  });
+  it('quotes the recorded path so special characters stay literal', () => {
+    const hostile = hookBlock('/tmp/it\'s $(touch pwned) `id` "x"/bin.js');
+    expect(hostile).toContain(`[ -f '/tmp/it'\\''s $(touch pwned) \`id\` "x"/bin.js' ]`);
+    // the only way to leave single quotes is the escaped form '\'' , so no bare substitution remains
+    expect(hostile.replace(/'(?:[^']|'\\'')*'/g, "''")).not.toMatch(/\$\(touch/);
+  });
 });
 
 describe('hook location', () => {

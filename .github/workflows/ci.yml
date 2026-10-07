@@ -37,16 +37,35 @@ jobs:
       - run: npm run lint
       - run: npm test
 
-  # One stable check to require in the branch ruleset. It stays valid when the test matrix changes.
-  # `if: always()` matters: without it a failed matrix would leave this job skipped, and GitHub
+  # Packs the CLI as `npm publish` would, installs the tarball into an empty project and runs the README
+  # walkthrough against it. Uses the minimum supported Node, since that is what a release must work on.
+  pack-smoke:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24.19.0'
+          cache: npm
+      - run: npm ci
+      - run: npm run pack:smoke
+
+  # One stable check to require in the branch ruleset. It stays valid when the matrices change.
+  # `if: always()` matters: without it a failed job would leave this one skipped, and GitHub
   # counts a skipped required check as passing.
   ci-passed:
     if: always()
-    needs: test
+    needs: [test, pack-smoke]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Require every test job to have succeeded
+      - name: Require every job to have succeeded
         run: |
-          echo "test jobs: ${{ needs.test.result }}"
+          echo "test: ${{ needs.test.result }}, pack-smoke: ${{ needs.pack-smoke.result }}"
           test "${{ needs.test.result }}" = "success"
+          test "${{ needs.pack-smoke.result }}" = "success"
