@@ -7,6 +7,10 @@ All notable changes to Vestry are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-10-07
+
+First public release.
+
 ### Added
 
 - `vestry init [--git-hooks]` creates the `.vestry/` ledger folder and installs the pre-commit and post-commit
@@ -29,4 +33,5 @@ All notable changes to Vestry are documented here. The format follows
 - The git hooks fall back to a `vestry` on `PATH` when the CLI path recorded by `init` no longer exists, and warn
   instead of failing the commit when neither is available.
 
-[Unreleased]: https://github.com/swzn/vestry/commits/main
+[Unreleased]: https://github.com/swzn/vestry/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/swzn/vestry/releases/tag/v0.1.0
