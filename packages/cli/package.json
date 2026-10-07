@@ -19,6 +19,6 @@
   },
   "dependencies": {
     "@vestry/core": "*",
-    "commander": "^14.0.0"
+    "commander": "^15.0.0"
   }
 }
