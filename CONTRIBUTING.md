@@ -98,7 +98,7 @@ For maintainers. Releases are cut from `main`, and nothing is published without 
    npm asks for your 2FA code. Then publish the draft GitHub Release.
 
 To rehearse without publishing anything, run the **release** workflow from the Actions tab: it executes the
-checks and stops before the publish job.
+checks, including a dry run of the staging command, and stops before the publish job.
 
 ### One-time setup
 
