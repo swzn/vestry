@@ -81,7 +81,7 @@ For maintainers. Releases are cut from `main`, and nothing is published without 
    - rename `## [Unreleased]` in `CHANGELOG.md` to `## [X.Y.Z] - YYYY-MM-DD`, start a new empty
      `## [Unreleased]` above it, and update the link definitions at the bottom;
    - bump the version with `npm version X.Y.Z -w packages/cli --no-git-tag-version`.
-3. After it merges, tag the merge commit and push the tag:
+3. After it merges, pull `main` and tag it (not the pull request branch) and push the tag:
    ```bash
    git switch main && git pull
    git tag vX.Y.Z && git push origin vX.Y.Z
@@ -89,8 +89,13 @@ For maintainers. Releases are cut from `main`, and nothing is published without 
 4. The **release** workflow verifies that the tag, the package version and the changelog agree, runs every check
    (including the tarball install test), packs the tarball, and **stages** it on npm. It also drafts a GitHub
    Release with the changelog notes and the tarball attached.
-5. Approve the staged package on npmjs.com (package page, **Staged Packages** tab) or with `npm stage approve`.
-   Both ask for your 2FA code. Then publish the draft GitHub Release.
+5. Approve the staged package. Find its id, then approve it (this needs npm 11.15 or newer; `npm exec` runs the
+   latest npm without upgrading yours):
+   ```bash
+   npm exec --package=npm@latest -- npm stage list @vestry/cli
+   npm exec --package=npm@latest -- npm stage approve <stage-id>
+   ```
+   npm asks for your 2FA code. Then publish the draft GitHub Release.
 
 To rehearse without publishing anything, run the **release** workflow from the Actions tab: it executes the
 checks and stops before the publish job.
@@ -103,6 +108,12 @@ checks and stops before the publish job.
 - Under **Publishing access**, choose "Require two-factor authentication and disallow tokens".
 - The first version of a package is published by hand, because trusted publishing is configured on an existing
   package. The release workflow copes with this: when `@vestry/cli` is not on npm yet, it skips staging, drafts the
-  GitHub Release with the verified tarball attached, and prints a notice. Download that tarball and run
-  `npm publish ./vestry-cli-X.Y.Z.tgz --access public` (npm asks for your 2FA code), then do the trusted publisher setup above. That
-  first version has no provenance badge; later releases do.
+  GitHub Release with the verified tarball attached, and prints a notice. Download that tarball (the attached
+  `vestry-cli-X.Y.Z.tgz`, not GitHub's "Source code" archives) and run
+  `npm publish ./vestry-cli-X.Y.Z.tgz --access public`. npm asks for your 2FA code, then do the trusted publisher
+  setup above. That first version has no provenance badge; later releases do.
+- npm holds the first version of a new package for a couple of minutes: the package page shows a "Temporary Holding
+  Version" (a `0.0.0-stage` placeholder) and then promotes the real version to `latest` by itself. No approval is
+  needed. The placeholder stays in the version list; it is harmless, and `npm deprecate` can mark it if you like.
+- npm refuses new unscoped names that are too similar to existing packages (`vestry` was rejected as too close to
+  `retry` and `destroy`), which is why the package is scoped as `@vestry/cli`.
