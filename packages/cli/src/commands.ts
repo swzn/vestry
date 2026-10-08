@@ -10,6 +10,7 @@ import {
   NewChangesetInputSchema,
   parseRecordInput,
   parseWhyTarget,
+  whySymbol,
   record,
   repairLedgerIndex,
   Report,
@@ -250,31 +251,42 @@ export async function cmdVerify(
 // ---- why ----
 export async function cmdWhy(
   ctx: Ctx,
-  spec: string,
-  opts: { depth?: string; latest?: boolean },
+  spec: string | undefined,
+  opts: { depth?: string; latest?: boolean; symbol?: string },
 ): Promise<CommandOutput<WhyResult>> {
   const repo = await discoverRepo(ctx.cwd);
-  const target = parseWhyTarget(spec);
   // the path is relative to where the command runs; the ledger and git use repo-relative POSIX paths
-  const rel = path.relative(repo.root, path.resolve(ctx.cwd, target.file)).split(path.sep).join('/');
-  if (rel.startsWith('..'))
-    throw new VestryError('USAGE', `${target.file} is outside the repository at ${repo.root}`);
+  const repoRelative = (file: string): string => {
+    const rel = path.relative(repo.root, path.resolve(ctx.cwd, file)).split(path.sep).join('/');
+    if (rel.startsWith('..'))
+      throw new VestryError('USAGE', `${file} is outside the repository at ${repo.root}`);
+    return rel;
+  };
   let depth: number | undefined;
   if (opts.depth !== undefined) {
     depth = Number(opts.depth);
     if (!Number.isInteger(depth) || depth < 1)
       throw new VestryError('USAGE', '--depth must be a positive whole number');
   }
-  const { result, report } = await why(
-    repo,
-    { file: rel, range: target.range },
-    { ...(depth ? { depth } : {}), latest: !!opts.latest },
-  );
+  const whyOpts = { ...(depth ? { depth } : {}), latest: !!opts.latest };
+  let outcome;
+  if (opts.symbol !== undefined) {
+    outcome = await whySymbol(
+      repo,
+      { name: opts.symbol, ...(spec ? { file: repoRelative(spec) } : {}) },
+      whyOpts,
+    );
+  } else {
+    if (!spec) throw new VestryError('USAGE', 'give <file>:<line>, <file>:<start>-<end>, or --symbol <name>');
+    const target = parseWhyTarget(spec);
+    outcome = await why(repo, { file: repoRelative(target.file), range: target.range }, whyOpts);
+  }
+  const { result, report } = outcome;
   return {
     data: result,
     report,
     human: (d) => {
-      const out = [`${d.file}:${range(d.range)}`];
+      const out = [`${d.file}:${range(d.range)}${d.symbol ? `  (${d.symbol.kind} ${d.symbol.name})` : ''}`];
       if (!d.records.length) out.push('No recorded reasons for these lines.');
       d.records.forEach((r, i) => {
         const where = r.range ? `lines ${range(r.range)}` : 'lines not located';

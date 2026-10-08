@@ -312,3 +312,43 @@ describe('why in the real flow', () => {
     expect(bad.err).toMatch(/not tracked at HEAD/);
   });
 });
+
+describe('why --symbol in the real flow', () => {
+  it('finds a function by name through the built binary, and says so when it cannot', async () => {
+    const source = [
+      'export class Widget {',
+      '  render() {',
+      '    return 1;',
+      '  }',
+      '}',
+      '',
+      'export function helper() {',
+      '  return 3;',
+      '}',
+      '',
+    ].join('\n');
+    const r = await project({ 'w.ts': source });
+    r.write('w.ts', source.replace('return 1', 'return 11'));
+    recordAll(r, 'Render eleven');
+    r.add('w.ts');
+    expect(gitRaw(r, ['commit', '-q', '-m', 'render']).code).toBe(0);
+
+    const found = JSON.parse(vestry(r, ['why', '--symbol', 'Widget.render', '--json']).out);
+    expect(found.data.symbol).toEqual({ name: 'Widget.render', kind: 'method' });
+    expect(found.data.records.map((x: { changeset: { title: string } }) => x.changeset.title)).toEqual([
+      'Render eleven',
+    ]);
+
+    const human = vestry(r, ['why', 'w.ts', '--symbol', 'render']);
+    expect(human.out).toMatch(/\(method Widget\.render\)/);
+
+    const missing = vestry(r, ['why', '--symbol', 'nothing']);
+    expect(missing.code).toBe(1);
+    expect(missing.err).toMatch(/no symbol "nothing" at HEAD/);
+
+    r.commitFiles({ 'notes.txt': 'hello\n' }, 'notes');
+    const unsupported = vestry(r, ['why', 'notes.txt', '--symbol', 'hello']);
+    expect(unsupported.code).toBe(1);
+    expect(unsupported.err).toMatch(/not available for notes\.txt/);
+  });
+});

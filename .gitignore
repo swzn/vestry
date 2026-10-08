@@ -10,6 +10,7 @@ coverage/
 # copied in by `npm pack` (see scripts/package-docs.mjs)
 packages/cli/README.md
 packages/cli/LICENSE
+packages/cli/THIRD_PARTY_NOTICES.md
 
 # package tarballs and downloaded release archives
 *.tgz

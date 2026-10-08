@@ -8,6 +8,7 @@ import {
   ulid,
   VestryError,
   why,
+  whySymbol,
 } from '../src/index.js';
 import type { Change, Entry } from '../src/index.js';
 import { lines, TestRepo } from './helpers/repo.js';
@@ -352,5 +353,70 @@ describe('why: renames and errors', () => {
     const res = await ask(r, 'a.txt', [1, 1]);
     expect(res.report.findings.map((f) => f.code).sort()).toEqual(['WHY_EMPTY_LEDGER', 'WHY_UNCOMMITTED']);
     expect(res.result.gaps.map((g) => g.reason)).toEqual(['no-entry']);
+  });
+});
+
+describe('why --symbol', () => {
+  const SRC = [
+    'export class Widget {',
+    '  render() {',
+    '    return 1;',
+    '  }',
+    '  other() {',
+    '    return 2;',
+    '  }',
+    '}',
+    '',
+    'export function helper() {',
+    '  return 3;',
+    '}',
+    '',
+  ].join('\n');
+
+  const project = () => {
+    const r = mk();
+    recorded(r, { 'w.ts': SRC }, [{ file: 'w.ts', range: [1, 12], changeset: 'create-widget' }], 'create');
+    recorded(
+      r,
+      { 'w.ts': SRC.replace('return 1', 'return 11') },
+      [{ file: 'w.ts', range: [3, 3], changeset: 'render-eleven' }],
+      'render eleven',
+    );
+    return r;
+  };
+  const sym = async (r: TestRepo, name: string, file?: string, opts = {}) =>
+    whySymbol(await discoverRepo(r.dir), { name, ...(file ? { file } : {}) }, opts);
+
+  it('answers for the lines of the symbol, finding the file from the ledger when none is given', async () => {
+    const r = project();
+    const res = await sym(r, 'Widget.render');
+    expect(res.result.symbol).toEqual({ name: 'Widget.render', kind: 'method' });
+    expect(res.result.range).toEqual([2, 4]);
+    expect(res.result.records.map((x) => x.changeset.id)).toEqual(['render-eleven', 'create-widget']);
+    // a different symbol in the same file only gets the records that cover its lines
+    const other = await sym(r, 'helper', 'w.ts');
+    expect(other.result.records.map((x) => x.changeset.id)).toEqual(['create-widget']);
+  });
+
+  it('accepts a trailing name and refuses unknown, ambiguous and unsupported lookups clearly', async () => {
+    const r = project();
+    expect((await sym(r, 'render')).result.symbol?.name).toBe('Widget.render');
+    await expect(sym(r, 'nothing')).rejects.toThrow(/no symbol "nothing" at HEAD/);
+    r.commitFiles({ 'x.ts': 'export function dup() {}\n' }, 'x');
+    recorded(
+      r,
+      { 'y.ts': 'export function dup() {}\n' },
+      [{ file: 'y.ts', range: [1, 1], changeset: 'dup' }],
+      'y',
+    );
+    recorded(
+      r,
+      { 'x.ts': 'export function dup() { return 1; }\n' },
+      [{ file: 'x.ts', range: [1, 1], changeset: 'dupx' }],
+      'x2',
+    );
+    await expect(sym(r, 'dup')).rejects.toThrow(/ambiguous/);
+    r.commitFiles({ 'notes.txt': 'hello\n' }, 'notes');
+    await expect(sym(r, 'hello', 'notes.txt')).rejects.toThrow(/not available for notes.txt/);
   });
 });
