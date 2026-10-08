@@ -7,19 +7,7 @@ All notable changes to Vestry are documented here. The format follows
 
 ## [Unreleased]
 
-### Added
-
-- `vestry why --symbol <name> [file]` looks up a function, class, method, interface or similar by name (for example
-  `Widget.render`, or just `render`) and shows the reasons behind its lines. It works for TypeScript, JavaScript
-  (including TSX and JSX) and Java files, and for entries written before this release. The name is resolved in the
-  committed version of the file; a symbol that was deleted or renamed is reported as not found, and an ambiguous
-  name lists the candidates so you can pick one by line range.
-
-### Changed
-
-- The package now includes the tree-sitter WebAssembly runtime and four grammars (about 3.8 MB unpacked,
-  `THIRD_PARTY_NOTICES.md` lists their licenses). Commands that do not need symbols are unaffected; startup is about
-  15 ms slower.
+## [0.2.0] - 2026-10-08
 
 ### Added
 
@@ -28,6 +16,17 @@ All notable changes to Vestry are documented here. The format follows
   `verified`, `hashed`, `hashed-ambiguous` or `unanchored`); records that cannot be tied to the exact lines, for
   example after a squash merge, are labelled `unanchored` instead of being guessed. Commits that touched the lines
   without a matching record are listed too.
+- `vestry why --symbol <name> [file]` looks up a function, class, method, interface or similar by name (for example
+  `Widget.render`, or just `render`) and shows the reasons behind its lines. It works for TypeScript, JavaScript
+  (including TSX and JSX) and Java files, and for entries written before this release. The name is resolved in the
+  committed version of the file; a symbol that was deleted or renamed is reported as not found, and an ambiguous
+  name lists the candidates so you can pick one by line range.
+
+### Changed
+
+- The package now includes the tree-sitter WebAssembly runtime and four grammars (about 4 MB unpacked;
+  `THIRD_PARTY_NOTICES.md` lists their licenses). Commands that do not need symbols are unaffected, but startup is
+  about 15 ms slower.
 
 ## [0.1.1] - 2026-10-07
 
@@ -63,6 +62,7 @@ First public release.
 - The git hooks fall back to a `vestry` on `PATH` when the CLI path recorded by `init` no longer exists, and warn
   instead of failing the commit when neither is available.
 
-[Unreleased]: https://github.com/swzn/vestry/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/swzn/vestry/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/swzn/vestry/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/swzn/vestry/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/swzn/vestry/releases/tag/v0.1.0
