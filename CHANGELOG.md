@@ -7,6 +7,14 @@ All notable changes to Vestry are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- `vestry why <file>:<line>` and `vestry why <file>:<start>-<end>` show the recorded reasons behind a line or a line
+  range, newest first, with `--depth <n>` and `--latest`. Each result says how its lines were matched (`exact`,
+  `verified`, `hashed`, `hashed-ambiguous` or `unanchored`); records that cannot be tied to the exact lines, for
+  example after a squash merge, are labelled `unanchored` instead of being guessed. Commits that touched the lines
+  without a matching record are listed too.
+
 ## [0.1.1] - 2026-10-07
 
 ### Changed

@@ -46,10 +46,11 @@ export async function lineLog(
   rev: string,
   file: string,
   range: [number, number],
+  opts: { maxCount?: number } = {},
 ): Promise<LineLogEntry[]> {
-  const out = await git(['log', '-U0', '-L', `${range[0]},${range[1]}:${file}`, '--format=COMMIT:%H', rev], {
-    cwd,
-  });
+  const args = ['log', '-U0', '-L', `${range[0]},${range[1]}:${file}`, '--format=COMMIT:%H'];
+  if (opts.maxCount) args.push('-n', String(opts.maxCount));
+  const out = await git([...args, rev], { cwd });
   const entries: LineLogEntry[] = [];
   let commit: string | null = null;
   let curPath = file;
