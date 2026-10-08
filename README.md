@@ -10,7 +10,8 @@ Record *why* code changed, next to the code.
 Git tells you what changed and when. Vestry keeps the reasoning. Each commit carries a few small JSON files that say
 why a change was made, linked to the exact lines it touched. They live in your repository, so they travel with
 clones, branches and forks, and anyone (a teammate, a future you, or an AI coding agent) can look up the reasoning
-before changing the code again.
+before changing the code again. The records are short, curated decisions (what was chosen, what was rejected, what
+must keep working), not session transcripts, and they are plain files that survive rebases and squash merges.
 
 > **Status:** early development (`0.x`). The commands below work and are tested, but the ledger format may still
 > change before 1.0. Changes are listed in the
@@ -144,6 +145,30 @@ vestry record --changeset retry-failed-calls-5bl9 --hunk h_1a2b3c4d
 
 On PowerShell, pipe a here-string into `vestry record --input -`, or pass a file with `--input record.json`.
 
+### Look up why
+
+Ask why some lines are the way they are, before you change them:
+
+```console
+$ vestry why retry.js:1-2
+retry.js:1-2
+
+1. Retry failed calls  [retry-failed-calls-fzvx]
+   80fdeaaa 2026-10-08 Retry failed calls
+   anchor: exact, lines 1
+   Upstream times out occasionally; three attempts keeps requests reliable without hiding persistent failures.
+   Note on this change: The loop is bounded so a persistent failure still surfaces
+
+Commits that touched these lines with no matching record: 1
+   78055667 init
+```
+
+Results are newest first. `--latest` shows only the newest record and `--depth <n>` limits how far back to look. Each
+result says how its lines were matched to the current code: `exact` and `verified` are reliable, `hashed` was found by
+its content after the lines moved, and `unanchored` means a commit that touched these lines has a record Vestry could
+not tie to the exact lines (for example after a squash merge). Vestry never guesses a range. Commits that touched the
+lines without any record are listed as well, so a gap is visible instead of silent.
+
 ### What to expect at commit time
 
 - **No record for a staged change:** a warning, and the commit goes through. With `--strict` (or
@@ -234,9 +259,14 @@ In a repository that uses Vestry:
 
 ## Not built yet
 
-- Searching the ledger by symbol or free text, and a persistent search index. (`vestry why` answers by file and line.)
+- Looking up why by symbol (`vestry why --symbol`) or by free text, and a persistent search index. `vestry why` answers
+  by file and line today.
 - Language-aware symbol extraction.
-- An agent skill that teaches coding agents the record workflow.
+- Whether the lines a record describes are still live, and a record's place in a chain of changes that supersede each
+  other.
+- Which other code a change affects (`impact`), and a `check` command for CI beyond `verify`.
+- A secret scanner and a `review` step for flagged records.
+- An agent skill, `AGENTS.md` snippet and agent hooks that teach coding agents the record workflow.
 - A dashboard.
 
 `changeset find` works today but uses simple keyword matching.
