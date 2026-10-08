@@ -163,6 +163,16 @@ Commits that touched these lines with no matching record: 1
    78055667 init
 ```
 
+To ask about a function or class by name instead of by line numbers:
+
+```bash
+vestry why --symbol Widget.render
+vestry why src/widget.ts --symbol render   # limit the search to one file
+```
+
+Symbol lookup understands TypeScript, JavaScript and Java files. It resolves the name in the committed version of
+the file, so a symbol that was deleted or renamed is reported as not found; use `<file>:<start>-<end>` for those.
+
 Results are newest first. `--latest` shows only the newest record and `--depth <n>` limits how far back to look. Each
 result says how its lines were matched to the current code: `exact` and `verified` are reliable, `hashed` was found by
 its content after the lines moved, and `unanchored` means a commit that touched these lines has a record Vestry could
@@ -192,7 +202,7 @@ lines without any record are listed as well, so a gap is visible instead of sile
 | `vestry record` | Link hunks to a changeset. Takes JSON via `--input <file\|->`, or flags: `--changeset`, `--hunk`, `--file`, `--comment`, `--needs-review <reason>`. |
 | `vestry finalize [--hook]` | Write the entry for the staged changes. Run by the pre-commit hook; you rarely call it yourself. |
 | `vestry post-commit` | Repair the index after a partial commit (`git commit <path>`). Run by the post-commit hook. |
-| `vestry why <file>:<line>` or `<file>:<start>-<end>` `[--depth n] [--latest]` | Show the recorded reasons behind those lines, newest first, and how each was matched to the current code. |
+| `vestry why <file>:<line>`, `<file>:<start>-<end>` or `--symbol <name> [file]` `[--depth n] [--latest]` | Show the recorded reasons behind those lines, newest first, and how each was matched to the current code. |
 | `vestry verify [--against <ref>] [--no-worktree]` | Check that committed ledger files were never modified or deleted. Deletions caused by `git revert` are allowed. |
 
 Global options, available on every command:
@@ -259,9 +269,9 @@ In a repository that uses Vestry:
 
 ## Not built yet
 
-- Looking up why by symbol (`vestry why --symbol`) or by free text, and a persistent search index. `vestry why` answers
-  by file and line today.
-- Language-aware symbol extraction.
+- Looking up why by free text, and a persistent search index. `vestry why` answers by file and line, or by symbol
+  name for TypeScript, JavaScript and Java.
+- Imports and references between files (needed for `impact`).
 - Whether the lines a record describes are still live, and a record's place in a chain of changes that supersede each
   other.
 - Which other code a change affects (`impact`), and a `check` command for CI beyond `verify`.

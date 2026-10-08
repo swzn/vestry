@@ -9,6 +9,20 @@ All notable changes to Vestry are documented here. The format follows
 
 ### Added
 
+- `vestry why --symbol <name> [file]` looks up a function, class, method, interface or similar by name (for example
+  `Widget.render`, or just `render`) and shows the reasons behind its lines. It works for TypeScript, JavaScript
+  (including TSX and JSX) and Java files, and for entries written before this release. The name is resolved in the
+  committed version of the file; a symbol that was deleted or renamed is reported as not found, and an ambiguous
+  name lists the candidates so you can pick one by line range.
+
+### Changed
+
+- The package now includes the tree-sitter WebAssembly runtime and four grammars (about 3.8 MB unpacked,
+  `THIRD_PARTY_NOTICES.md` lists their licenses). Commands that do not need symbols are unaffected; startup is about
+  15 ms slower.
+
+### Added
+
 - `vestry why <file>:<line>` and `vestry why <file>:<start>-<end>` show the recorded reasons behind a line or a line
   range, newest first, with `--depth <n>` and `--latest`. Each result says how its lines were matched (`exact`,
   `verified`, `hashed`, `hashed-ambiguous` or `unanchored`); records that cannot be tied to the exact lines, for

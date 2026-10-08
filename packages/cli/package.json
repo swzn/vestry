@@ -28,7 +28,8 @@
     "vestry": "./dist/bin.js"
   },
   "files": [
-    "dist"
+    "dist",
+    "THIRD_PARTY_NOTICES.md"
   ],
   "engines": {
     "node": ">=24.19.0"
@@ -44,7 +45,8 @@
     "zod": "^4.0.0"
   },
   "devDependencies": {
-    "@vestry/core": "*"
+    "@vestry/core": "*",
+    "@vscode/tree-sitter-wasm": "^0.3.1"
   },
   "publishConfig": {
     "access": "public"

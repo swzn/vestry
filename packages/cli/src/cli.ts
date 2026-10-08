@@ -133,13 +133,14 @@ export async function main(argv: string[], io: IO = defaultIO(process.argv[1] ??
     .action((opts) => run((ctx) => cmdVerify(ctx, opts))());
 
   program
-    .command('why <target>')
+    .command('why [target]')
     .description(
-      'show the recorded reasons behind a line or line range, newest first (<file>:<line> or <file>:<start>-<end>)',
+      'show the recorded reasons behind lines, newest first: <file>:<line>, <file>:<start>-<end>, or --symbol <name> [file]',
     )
+    .option('--symbol <name>', 'look up a function, class or method by name instead of lines')
     .option('--depth <n>', 'look at most n commits that touched the lines')
     .option('--latest', 'only the most recent record')
-    .action((target: string, opts) => run((ctx) => cmdWhy(ctx, target, opts))());
+    .action((target: string | undefined, opts) => run((ctx) => cmdWhy(ctx, target, opts))());
 
   try {
     await program.parseAsync(argv, { from: 'user' });

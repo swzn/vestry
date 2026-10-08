@@ -14,6 +14,9 @@ import { lineLog } from './git/blame.js';
 import { ownerCommits } from './git/ownership.js';
 import { hashWindowSearch, rangeHash, splitLines } from './git/normalize.js';
 import { readBlobText } from './git/snapshot.js';
+import { extractSymbols, findSymbols } from './analysis/symbols.js';
+import type { SymbolInfo } from './analysis/symbols.js';
+import { supportedExtensions } from './analysis/symbols.js';
 import { REL } from './schema/layout.js';
 import { loadLedger } from './schema/reader.js';
 import { declaredStatuses } from './schema/derived.js';
@@ -43,6 +46,8 @@ export interface WhyGap {
 }
 
 export interface WhyResult {
+  /** set when the range came from a symbol name */
+  symbol?: { name: string; kind: string };
   file: string;
   range: [number, number];
   /** commits that touched the range, as walked (newest first) */
@@ -254,4 +259,84 @@ export async function why(
     },
     report,
   };
+}
+
+export interface WhySymbolTarget {
+  name: string;
+  /** limit the search to this file; otherwise every file the ledger has records for */
+  file?: string;
+}
+
+interface Candidate {
+  file: string;
+  symbol: SymbolInfo;
+}
+
+/** Candidate files when no file is given: those that have ledger records and still exist at HEAD. */
+async function filesWithRecords(cwd: string): Promise<string[]> {
+  const ledger = await loadLedger(cwd, { kind: 'head' });
+  const files = new Set<string>();
+  for (const e of ledger.entries.values()) for (const c of e.changes) files.add(c.file);
+  const exts = supportedExtensions();
+  return [...files].filter((f) => exts.some((x) => f.toLowerCase().endsWith(x))).sort();
+}
+
+/**
+ * `why` for a symbol: find where it sits at HEAD, then answer for those lines. Works on every entry already
+ * written because the lines are followed through history by git, not looked up by a stored name.
+ * A symbol that no longer exists at HEAD is reported as not found.
+ */
+export async function whySymbol(
+  repo: RepoInfo,
+  target: WhySymbolTarget,
+  opts: WhyOptions = {},
+): Promise<{ result: WhyResult; report: Report }> {
+  const cwd = repo.root;
+  if (!repo.hasHead) throw new VestryError('INVALID_INPUT', 'this repository has no commits yet.');
+  const files = target.file ? [target.file] : await filesWithRecords(cwd);
+  const found: Candidate[] = [];
+  const skipped: string[] = [];
+  for (const file of files) {
+    const oid = await gitTry(['rev-parse', '--verify', '-q', `HEAD:${file}`], { cwd, okExitCodes: [0, 1] });
+    if (oid.code !== 0) {
+      if (target.file)
+        throw new VestryError(
+          'INVALID_INPUT',
+          `${file} is not tracked at HEAD (commit it first, or check the path).`,
+        );
+      continue;
+    }
+    const res = await extractSymbols(file, (await readBlobText(cwd, oid.stdout.trim())) ?? '');
+    if (res.status === 'ok') {
+      for (const symbol of findSymbols(res.symbols, target.name)) found.push({ file, symbol });
+    } else if (target.file) {
+      throw new VestryError(
+        'INVALID_INPUT',
+        res.status === 'unsupported'
+          ? `symbol lookup is not available for ${file}; ask for lines instead: ${file}:<start>-<end>`
+          : `could not analyze ${file}: ${res.reason}; ask for lines instead: ${file}:<start>-<end>`,
+      );
+    } else skipped.push(file);
+  }
+  if (found.length === 0)
+    throw new VestryError(
+      'INVALID_INPUT',
+      `no symbol "${target.name}" at HEAD in ${target.file ?? 'the files that have records'}` +
+        (skipped.length ? ` (${skipped.length} file(s) could not be analyzed)` : '') +
+        '. Symbols that were deleted or renamed are not found; ask for lines instead.',
+    );
+  if (found.length > 1) {
+    const list = found.map(
+      (c) => `${c.file}:${c.symbol.range[0]}-${c.symbol.range[1]} (${c.symbol.kind} ${c.symbol.name})`,
+    );
+    throw new VestryError(
+      'USAGE',
+      `"${target.name}" is ambiguous; pick one of these and ask for its lines:\n  ${list.join('\n  ')}`,
+      { details: found.map((c) => ({ file: c.file, ...c.symbol })) },
+    );
+  }
+  const hit = found[0]!;
+  const out = await why(repo, { file: hit.file, range: hit.symbol.range }, opts);
+  out.result.symbol = { name: hit.symbol.name, kind: hit.symbol.kind };
+  return out;
 }
