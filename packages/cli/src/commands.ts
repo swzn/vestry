@@ -1,3 +1,4 @@
+import path from 'node:path';
 import {
   BIN_NAME,
   computeStatus,
@@ -8,11 +9,13 @@ import {
   initProject,
   NewChangesetInputSchema,
   parseRecordInput,
+  parseWhyTarget,
   record,
   repairLedgerIndex,
   Report,
   verifyImmutability,
   VestryError,
+  why,
 } from '@vestry/core';
 import type {
   FinalizeResult,
@@ -21,6 +24,7 @@ import type {
   RecordSummary,
   StatusResult,
   VerifyResult,
+  WhyResult,
 } from '@vestry/core';
 import { readInput } from './io.js';
 import type { CommandOutput, Ctx } from './output.js';
@@ -240,5 +244,56 @@ export async function cmdVerify(
     human: (d) =>
       `checked ${d.ledgerFiles} ledger file(s) ${d.mode === 'diff' ? `against ${d.against}` : 'across the whole history'}` +
       (report.hasErrors() ? '' : ': no immutability violations'),
+  };
+}
+
+// ---- why ----
+export async function cmdWhy(
+  ctx: Ctx,
+  spec: string,
+  opts: { depth?: string; latest?: boolean },
+): Promise<CommandOutput<WhyResult>> {
+  const repo = await discoverRepo(ctx.cwd);
+  const target = parseWhyTarget(spec);
+  // the path is relative to where the command runs; the ledger and git use repo-relative POSIX paths
+  const rel = path.relative(repo.root, path.resolve(ctx.cwd, target.file)).split(path.sep).join('/');
+  if (rel.startsWith('..'))
+    throw new VestryError('USAGE', `${target.file} is outside the repository at ${repo.root}`);
+  let depth: number | undefined;
+  if (opts.depth !== undefined) {
+    depth = Number(opts.depth);
+    if (!Number.isInteger(depth) || depth < 1)
+      throw new VestryError('USAGE', '--depth must be a positive whole number');
+  }
+  const { result, report } = await why(
+    repo,
+    { file: rel, range: target.range },
+    { ...(depth ? { depth } : {}), latest: !!opts.latest },
+  );
+  return {
+    data: result,
+    report,
+    human: (d) => {
+      const out = [`${d.file}:${range(d.range)}`];
+      if (!d.records.length) out.push('No recorded reasons for these lines.');
+      d.records.forEach((r, i) => {
+        const where = r.range ? `lines ${range(r.range)}` : 'lines not located';
+        out.push(
+          '',
+          `${i + 1}. ${r.changeset.title}  [${r.changeset.id}]`,
+          `   ${r.commit.slice(0, 8)} ${r.date.slice(0, 10)} ${r.subject}`,
+          `   anchor: ${r.anchor}, ${where}${r.changeset.supersededBy.length ? `; superseded by ${r.changeset.supersededBy.join(', ')}` : ''}`,
+          ...r.changeset.reasoning.split('\n').map((l) => `   ${l}`),
+          ...(r.comment ? [`   Note on this change: ${r.comment}`] : []),
+        );
+      });
+      if (d.gaps.length) {
+        out.push('', `Commits that touched these lines with no matching record: ${d.gaps.length}`);
+        for (const g of d.gaps.slice(0, 5)) out.push(`   ${g.commit.slice(0, 8)} ${g.subject}`);
+        if (d.gaps.length > 5) out.push(`   ... and ${d.gaps.length - 5} more (see --json)`);
+      }
+      if (d.truncated) out.push('', 'Stopped at --depth; older commits exist.');
+      return out.join('\n');
+    },
   };
 }

@@ -5,6 +5,7 @@ export * from './config.js';
 export * from './ignore.js';
 export * from './init.js';
 export * from './verify.js';
+export * from './why.js';
 export * from './repair.js';
 export * from './git/runner.js';
 export * from './git/repo.js';

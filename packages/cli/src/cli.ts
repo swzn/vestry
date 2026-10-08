@@ -11,6 +11,7 @@ import {
   cmdRecord,
   cmdStatus,
   cmdVerify,
+  cmdWhy,
 } from './commands.js';
 import { defaultIO } from './io.js';
 import type { IO } from './io.js';
@@ -130,6 +131,15 @@ export async function main(argv: string[], io: IO = defaultIO(process.argv[1] ??
     .option('--against <ref>', 'compare against this ref instead of the upstream or default branch')
     .option('--no-worktree', 'ignore uncommitted changes')
     .action((opts) => run((ctx) => cmdVerify(ctx, opts))());
+
+  program
+    .command('why <target>')
+    .description(
+      'show the recorded reasons behind a line or line range, newest first (<file>:<line> or <file>:<start>-<end>)',
+    )
+    .option('--depth <n>', 'look at most n commits that touched the lines')
+    .option('--latest', 'only the most recent record')
+    .action((target: string, opts) => run((ctx) => cmdWhy(ctx, target, opts))());
 
   try {
     await program.parseAsync(argv, { from: 'user' });

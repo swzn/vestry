@@ -167,6 +167,7 @@ On PowerShell, pipe a here-string into `vestry record --input -`, or pass a file
 | `vestry record` | Link hunks to a changeset. Takes JSON via `--input <file\|->`, or flags: `--changeset`, `--hunk`, `--file`, `--comment`, `--needs-review <reason>`. |
 | `vestry finalize [--hook]` | Write the entry for the staged changes. Run by the pre-commit hook; you rarely call it yourself. |
 | `vestry post-commit` | Repair the index after a partial commit (`git commit <path>`). Run by the post-commit hook. |
+| `vestry why <file>:<line>` or `<file>:<start>-<end>` `[--depth n] [--latest]` | Show the recorded reasons behind those lines, newest first, and how each was matched to the current code. |
 | `vestry verify [--against <ref>] [--no-worktree]` | Check that committed ledger files were never modified or deleted. Deletions caused by `git revert` are allowed. |
 
 Global options, available on every command:
@@ -233,7 +234,7 @@ In a repository that uses Vestry:
 
 ## Not built yet
 
-- Searching the ledger by file or line (a `why` command), and a persistent search index.
+- Searching the ledger by symbol or free text, and a persistent search index. (`vestry why` answers by file and line.)
 - Language-aware symbol extraction.
 - An agent skill that teaches coding agents the record workflow.
 - A dashboard.

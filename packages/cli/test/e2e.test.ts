@@ -270,3 +270,45 @@ describe('verify in the real flow', () => {
     expect(bad.err).toMatch(/immutable/);
   });
 });
+
+describe('why in the real flow', () => {
+  it('explains a range from records written by the hook, and survives a squash merge', async () => {
+    const r = await project();
+    r.write('a.txt', lines(20).replace('line 5', 'FIVE'));
+    recordAll(r, 'Rename five', 'because five reads better');
+    r.add('a.txt');
+    expect(gitRaw(r, ['commit', '-q', '-m', 'feature']).code).toBe(0);
+
+    const human = vestry(r, ['why', 'a.txt:5']);
+    expect(human.code).toBe(0);
+    expect(human.out).toMatch(/Rename five/);
+    expect(human.out).toMatch(/anchor: exact, lines 5/);
+    expect(human.out).toMatch(/because five reads better/);
+
+    const json = JSON.parse(vestry(r, ['why', 'a.txt:4-6', '--json', '--latest']).out);
+    expect(json.ok).toBe(true);
+    expect(json.data.records).toHaveLength(1);
+    expect(json.data.records[0].changeset.title).toBe('Rename five');
+
+    // a second feature on a branch, then squash-merged: the record must still be found for its lines
+    r.git('switch', '-q', '-c', 'topic');
+    r.write('a.txt', lines(20).replace('line 5', 'FIVE').replace('line 15', 'FIFTEEN'));
+    recordAll(r, 'Rename fifteen');
+    r.add('a.txt');
+    expect(gitRaw(r, ['commit', '-q', '-m', 'topic work']).code).toBe(0);
+    r.git('switch', '-q', 'main');
+    r.git('merge', '--squash', 'topic');
+    expect(gitRaw(r, ['commit', '-q', '--no-verify', '-m', 'Squashed topic (#2)']).code).toBe(0);
+    const squashed = JSON.parse(vestry(r, ['why', 'a.txt:15', '--json']).out);
+    expect(squashed.data.records.map((x: { changeset: { title: string } }) => x.changeset.title)).toEqual([
+      'Rename fifteen',
+    ]);
+    expect(squashed.data.records[0].anchor).toBe('exact');
+
+    // errors are clear and exit non-zero
+    expect(vestry(r, ['why', 'a.txt']).code).toBe(2);
+    const bad = vestry(r, ['why', 'nope.txt:1']);
+    expect(bad.code).toBe(1);
+    expect(bad.err).toMatch(/not tracked at HEAD/);
+  });
+});
