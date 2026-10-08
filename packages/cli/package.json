@@ -1,6 +1,6 @@
 {
   "name": "@vestry/cli",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "type": "module",
   "description": "Record why code changed, next to the code: immutable, in-repo changesets for humans and AI agents.",
   "license": "MIT",
