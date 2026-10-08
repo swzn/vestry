@@ -25,6 +25,7 @@ Vestry writes more than it should into the ledger, or of ways those hashes could
 
 If a secret does reach a commit, treat it as compromised and rotate it first.
 
-**Git hook execution.** `vestry init --git-hooks` installs `pre-commit` and `post-commit` hooks that run the CLI, by
-absolute path, on every commit. Reports about the hooks running anything other than the installed CLI, about unsafe
+**Git hook execution.** `vestry init --git-hooks` installs `pre-commit` and `post-commit` hooks that run the CLI on every
+commit: by the absolute path recorded when they were installed, or, if that file is gone, the first `vestry` found
+on `PATH`. Reports about the hooks running anything other than the installed CLI (or the `vestry` on `PATH` they fall back to), about unsafe
 handling of an existing hook's content, or about writes outside the repository's hooks directory are in scope.
