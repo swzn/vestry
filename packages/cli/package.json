@@ -42,7 +42,7 @@
   "dependencies": {
     "commander": "^15.0.0",
     "ignore": "^7.0.0",
-    "zod": "^4.0.0"
+    "zod": "^4.6.6"
   },
   "devDependencies": {
     "@vestry/core": "*",
