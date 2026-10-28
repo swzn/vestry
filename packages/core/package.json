@@ -18,7 +18,7 @@
     "schemas": "tsx scripts/export-schemas.ts"
   },
   "dependencies": {
-    "ignore": "^7.0.0",
-    "zod": "^4.0.0"
+    "ignore": "^7.0.14",
+    "zod": "^4.6.7"
   }
 }
